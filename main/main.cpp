@@ -4240,8 +4240,15 @@ bool Main::iteration() {
 	const double scaled_physics_step = physics_step * time_scale;
 
 	MainFrameTime advance = main_timer_sync.advance(physics_step, physics_ticks_per_second);
-	double process_step = advance.process_step;
-	double scaled_process_step = process_step * time_scale;
+
+	const int max_physics_steps = engine.get_max_physics_steps_per_frame();
+	const double process_step_cap_adjustment = fixed_fps == -1 && advance.physics_steps > max_physics_steps ? (advance.physics_steps - max_physics_steps) * physics_step : 0.0;
+	if (process_step_cap_adjustment > 0.0) {
+		advance.physics_steps = max_physics_steps;
+	}
+
+	const double process_step = advance.process_step - process_step_cap_adjustment;
+	const double scaled_process_step = process_step * time_scale;
 
 	engine._process_step = process_step;
 	engine._physics_interpolation_fraction = advance.interpolation_fraction;
@@ -4253,12 +4260,6 @@ bool Main::iteration() {
 	frame += ticks_elapsed;
 
 	last_ticks = ticks;
-
-	const int max_physics_steps = engine.get_max_physics_steps_per_frame();
-	if (fixed_fps == -1 && advance.physics_steps > max_physics_steps) {
-		process_step -= (advance.physics_steps - max_physics_steps) * physics_step;
-		advance.physics_steps = max_physics_steps;
-	}
 
 	bool exit = false;
 
