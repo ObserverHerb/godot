@@ -33,6 +33,7 @@
 #include "core/config/project_settings.h"
 #include "scene/3d/camera_3d.h"
 #include "scene/3d/visible_on_screen_notifier_3d.h"
+#include "scene/main/viewport.h"
 #include "scene/resources/camera_attributes.h"
 #include "scene/resources/environment.h"
 #include "servers/navigation_server_3d.h"
@@ -140,13 +141,14 @@ Ref<Compositor> World3D::get_compositor() const {
 	return compositor;
 }
 
-Dictionary World3D::shoot_ray(const Vector3 &origin, const Vector3 &direction, float range, uint32_t layer) {
+Dictionary World3D::shoot_ray(const Point2 &point, float range, uint32_t layer) {
 	PhysicsDirectSpaceState3D::RayResult result;
-	bool success = get_direct_space_state()->intersect_ray(PhysicsDirectSpaceState3D::RayParameters{
-		.from = origin,
-		.to = origin + direction * range,
-		.collision_mask = layer
-	}, result);
+	Camera3D *camera = (*cameras.begin())->get_viewport()->get_camera_3d(); // FIXME: Why do I have to dereference the iterator here?
+	PhysicsDirectSpaceState3D::RayParameters ray_parameters;
+	ray_parameters.from = camera->project_ray_origin(point);
+	ray_parameters.to = ray_parameters.from + camera->project_ray_normal(point) * range;
+	ray_parameters.collision_mask = layer;
+	bool success = get_direct_space_state()->intersect_ray(ray_parameters, result);
 
 	if (!success) {
 		return Dictionary();
@@ -177,7 +179,7 @@ void World3D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_fallback_environment"), &World3D::get_fallback_environment);
 	ClassDB::bind_method(D_METHOD("set_camera_attributes", "attributes"), &World3D::set_camera_attributes);
 	ClassDB::bind_method(D_METHOD("get_camera_attributes"), &World3D::get_camera_attributes);
-	ClassDB::bind_method(D_METHOD("shoot_ray", "origin", "direction", "range", "layer"), &World3D::shoot_ray);
+	ClassDB::bind_method(D_METHOD("shoot_ray", "origin", "range", "layer"), &World3D::shoot_ray);
 	ClassDB::bind_method(D_METHOD("get_direct_space_state"), &World3D::get_direct_space_state);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "environment", PROPERTY_HINT_RESOURCE_TYPE, "Environment"), "set_environment", "get_environment");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "fallback_environment", PROPERTY_HINT_RESOURCE_TYPE, "Environment"), "set_fallback_environment", "get_fallback_environment");
