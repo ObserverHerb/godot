@@ -4232,14 +4232,15 @@ bool Main::iteration() {
 
 	const uint64_t ticks_elapsed = ticks - last_ticks;
 
+	const double time_scale = Engine::get_singleton()->get_time_scale();
+
 	const int physics_ticks_per_second = Engine::get_singleton()->get_physics_ticks_per_second();
 	const double physics_step = 1.0 / physics_ticks_per_second;
-
-	const double time_scale = Engine::get_singleton()->get_time_scale();
+	const double scaled_physics_step = physics_step * time_scale;
 
 	MainFrameTime advance = main_timer_sync.advance(physics_step, physics_ticks_per_second);
 	double process_step = advance.process_step;
-	double scaled_step = process_step * time_scale;
+	double scaled_process_step = process_step * time_scale;
 
 	Engine::get_singleton()->_process_step = process_step;
 	Engine::get_singleton()->_physics_interpolation_fraction = advance.interpolation_fraction;
@@ -4291,7 +4292,7 @@ bool Main::iteration() {
 		PhysicsServer2D::get_singleton()->sync();
 		PhysicsServer2D::get_singleton()->flush_queries();
 
-		if (OS::get_singleton()->get_main_loop()->physics_process(physics_step * time_scale)) {
+		if (OS::get_singleton()->get_main_loop()->physics_process(scaled_physics_step)) {
 #ifndef _3D_DISABLED
 			PhysicsServer3D::get_singleton()->end_sync();
 #endif // _3D_DISABLED
@@ -4304,7 +4305,7 @@ bool Main::iteration() {
 
 		uint64_t navigation_begin = OS::get_singleton()->get_ticks_usec();
 
-		NavigationServer3D::get_singleton()->process(physics_step * time_scale);
+		NavigationServer3D::get_singleton()->process(scaled_physics_step);
 
 		navigation_process_ticks = MAX(navigation_process_ticks, OS::get_singleton()->get_ticks_usec() - navigation_begin); // keep the largest one for reference
 		navigation_process_max = MAX(OS::get_singleton()->get_ticks_usec() - navigation_begin, navigation_process_max);
@@ -4313,11 +4314,11 @@ bool Main::iteration() {
 
 #ifndef _3D_DISABLED
 		PhysicsServer3D::get_singleton()->end_sync();
-		PhysicsServer3D::get_singleton()->step(physics_step * time_scale);
+		PhysicsServer3D::get_singleton()->step(scaled_physics_step);
 #endif // _3D_DISABLED
 
 		PhysicsServer2D::get_singleton()->end_sync();
-		PhysicsServer2D::get_singleton()->step(physics_step * time_scale);
+		PhysicsServer2D::get_singleton()->step(scaled_physics_step);
 
 		message_queue->flush();
 
@@ -4335,7 +4336,7 @@ bool Main::iteration() {
 
 	uint64_t process_begin = OS::get_singleton()->get_ticks_usec();
 
-	if (OS::get_singleton()->get_main_loop()->process(process_step * time_scale)) {
+	if (OS::get_singleton()->get_main_loop()->process(scaled_process_step)) {
 		exit = true;
 	}
 	message_queue->flush();
@@ -4346,11 +4347,11 @@ bool Main::iteration() {
 			RenderingServer::get_singleton()->is_render_loop_enabled()) {
 		if ((!force_redraw_requested) && OS::get_singleton()->is_in_low_processor_usage_mode()) {
 			if (RenderingServer::get_singleton()->has_changed()) {
-				RenderingServer::get_singleton()->draw(true, scaled_step); // flush visual commands
+				RenderingServer::get_singleton()->draw(true, scaled_process_step); // flush visual commands
 				Engine::get_singleton()->increment_frames_drawn();
 			}
 		} else {
-			RenderingServer::get_singleton()->draw(true, scaled_step); // flush visual commands
+			RenderingServer::get_singleton()->draw(true, scaled_process_step); // flush visual commands
 			Engine::get_singleton()->increment_frames_drawn();
 			force_redraw_requested = false;
 		}
