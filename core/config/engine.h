@@ -66,6 +66,7 @@ private:
 	int _max_fps = 0;
 	int _audio_output_latency = 0;
 	double _time_scale = 1.0;
+	double _physics_time_scale = 1.0;
 	uint64_t _physics_frames = 0;
 	int max_physics_steps_per_frame = 8;
 	double _physics_interpolation_fraction = 0.0f;
@@ -127,6 +128,9 @@ public:
 
 	void set_time_scale(double p_scale);
 	double get_time_scale() const;
+
+	void set_physics_time_scale(double p_scale);
+	double get_physics_time_scale() const;
 
 	void set_print_error_messages(bool p_enabled);
 	bool is_printing_error_messages() const;

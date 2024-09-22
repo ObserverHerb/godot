@@ -1748,6 +1748,14 @@ double Engine::get_time_scale() {
 	return ::Engine::get_singleton()->get_time_scale();
 }
 
+void Engine::set_physics_time_scale(double p_scale) {
+	::Engine::get_singleton()->set_physics_time_scale(p_scale);
+}
+
+double Engine::get_physics_time_scale() {
+	return ::Engine::get_singleton()->get_physics_time_scale();
+}
+
 int Engine::get_frames_drawn() {
 	return ::Engine::get_singleton()->get_frames_drawn();
 }
@@ -1885,6 +1893,9 @@ void Engine::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("set_time_scale", "time_scale"), &Engine::set_time_scale);
 	ClassDB::bind_method(D_METHOD("get_time_scale"), &Engine::get_time_scale);
+
+	ClassDB::bind_method(D_METHOD("set_physics_time_scale", "physics_time_scale"), &Engine::set_physics_time_scale);
+	ClassDB::bind_method(D_METHOD("get_physics_time_scale"), &Engine::get_physics_time_scale);
 
 	ClassDB::bind_method(D_METHOD("get_frames_drawn"), &Engine::get_frames_drawn);
 	ClassDB::bind_method(D_METHOD("get_frames_per_second"), &Engine::get_frames_per_second);
