@@ -1606,8 +1606,8 @@ SceneTreeEditor::SceneTreeEditor(bool p_label, bool p_can_rename, bool p_can_ope
 
 	tree = memnew(Tree);
 	tree->set_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
-	tree->set_anchor(SIDE_RIGHT, ANCHOR_END);
-	tree->set_anchor(SIDE_BOTTOM, ANCHOR_END);
+	tree->set_anchor(SIDE_RIGHT, ANCHOR_END_F);
+	tree->set_anchor(SIDE_BOTTOM, ANCHOR_END_F);
 	tree->set_begin(Point2(0, p_label ? 18 : 0));
 	tree->set_end(Point2(0, 0));
 	tree->set_allow_reselect(true);
