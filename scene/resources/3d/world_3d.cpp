@@ -140,6 +140,29 @@ Ref<Compositor> World3D::get_compositor() const {
 	return compositor;
 }
 
+Dictionary World3D::shoot_ray(const Vector3 &origin, const Vector3 &direction, float range, uint32_t layer) {
+	PhysicsDirectSpaceState3D::RayResult result;
+	bool success = get_direct_space_state()->intersect_ray(PhysicsDirectSpaceState3D::RayParameters{
+		.from = origin,
+		.to = origin + direction * range,
+		.collision_mask = layer
+	}, result);
+
+	if (!success) {
+		return Dictionary();
+	}
+
+	Dictionary d;
+	d["position"] = result.position;
+	d["normal"] = result.normal;
+	d["collider_id"] = result.collider_id;
+	d["collider"] = result.collider;
+	d["shape"] = result.shape;
+	d["rid"] = result.rid;
+
+	return d;
+}
+
 PhysicsDirectSpaceState3D *World3D::get_direct_space_state() {
 	return PhysicsServer3D::get_singleton()->space_get_direct_state(get_space());
 }
@@ -154,6 +177,7 @@ void World3D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_fallback_environment"), &World3D::get_fallback_environment);
 	ClassDB::bind_method(D_METHOD("set_camera_attributes", "attributes"), &World3D::set_camera_attributes);
 	ClassDB::bind_method(D_METHOD("get_camera_attributes"), &World3D::get_camera_attributes);
+	ClassDB::bind_method(D_METHOD("shoot_ray", "origin", "direction", "range", "layer"), &World3D::shoot_ray);
 	ClassDB::bind_method(D_METHOD("get_direct_space_state"), &World3D::get_direct_space_state);
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "environment", PROPERTY_HINT_RESOURCE_TYPE, "Environment"), "set_environment", "get_environment");
 	ADD_PROPERTY(PropertyInfo(Variant::OBJECT, "fallback_environment", PROPERTY_HINT_RESOURCE_TYPE, "Environment"), "set_fallback_environment", "get_fallback_environment");

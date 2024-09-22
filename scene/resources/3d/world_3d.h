@@ -84,6 +84,8 @@ public:
 
 	_FORCE_INLINE_ const HashSet<Camera3D *> &get_cameras() const { return cameras; }
 
+	Dictionary shoot_ray(const Vector3 &origin, const Vector3 &direction, float range, uint32_t layer);
+
 	PhysicsDirectSpaceState3D *get_direct_space_state();
 
 	World3D();
