@@ -4224,17 +4224,18 @@ static uint64_t navigation_process_max = 0;
 // to be set explicitly here (defaults to EXIT_SUCCESS).
 bool Main::iteration() {
 	iterating++;
+	Engine &engine = *Engine::get_singleton();
 
 	const uint64_t ticks = OS::get_singleton()->get_ticks_usec();
-	Engine::get_singleton()->_frame_ticks = ticks;
+	engine._frame_ticks = ticks;
 	main_timer_sync.set_cpu_ticks_usec(ticks);
 	main_timer_sync.set_fixed_fps(fixed_fps);
 
 	const uint64_t ticks_elapsed = ticks - last_ticks;
 
-	const double time_scale = Engine::get_singleton()->get_time_scale();
+	const double time_scale = engine.get_time_scale();
 
-	const int physics_ticks_per_second = Engine::get_singleton()->get_physics_ticks_per_second();
+	const int physics_ticks_per_second = engine.get_physics_ticks_per_second();
 	const double physics_step = 1.0 / physics_ticks_per_second;
 	const double scaled_physics_step = physics_step * time_scale;
 
@@ -4242,8 +4243,8 @@ bool Main::iteration() {
 	double process_step = advance.process_step;
 	double scaled_process_step = process_step * time_scale;
 
-	Engine::get_singleton()->_process_step = process_step;
-	Engine::get_singleton()->_physics_interpolation_fraction = advance.interpolation_fraction;
+	engine._process_step = process_step;
+	engine._physics_interpolation_fraction = advance.interpolation_fraction;
 
 	uint64_t physics_process_ticks = 0;
 	uint64_t process_ticks = 0;
@@ -4253,7 +4254,7 @@ bool Main::iteration() {
 
 	last_ticks = ticks;
 
-	const int max_physics_steps = Engine::get_singleton()->get_max_physics_steps_per_frame();
+	const int max_physics_steps = engine.get_max_physics_steps_per_frame();
 	if (fixed_fps == -1 && advance.physics_steps > max_physics_steps) {
 		process_step -= (advance.physics_steps - max_physics_steps) * physics_step;
 		advance.physics_steps = max_physics_steps;
@@ -4274,8 +4275,8 @@ bool Main::iteration() {
 			Input::get_singleton()->flush_buffered_events();
 		}
 
-		Engine::get_singleton()->_in_physics = true;
-		Engine::get_singleton()->_physics_frames++;
+		engine._in_physics = true;
+		engine._physics_frames++;
 
 		uint64_t physics_begin = OS::get_singleton()->get_ticks_usec();
 
@@ -4298,7 +4299,7 @@ bool Main::iteration() {
 #endif // _3D_DISABLED
 			PhysicsServer2D::get_singleton()->end_sync();
 
-			Engine::get_singleton()->_in_physics = false;
+			engine._in_physics = false;
 			exit = true;
 			break;
 		}
@@ -4327,7 +4328,7 @@ bool Main::iteration() {
 		physics_process_ticks = MAX(physics_process_ticks, OS::get_singleton()->get_ticks_usec() - physics_begin); // keep the largest one for reference
 		physics_process_max = MAX(OS::get_singleton()->get_ticks_usec() - physics_begin, physics_process_max);
 
-		Engine::get_singleton()->_in_physics = false;
+		engine._in_physics = false;
 	}
 
 	if (Input::get_singleton()->is_agile_input_event_flushing()) {
@@ -4348,11 +4349,11 @@ bool Main::iteration() {
 		if ((!force_redraw_requested) && OS::get_singleton()->is_in_low_processor_usage_mode()) {
 			if (RenderingServer::get_singleton()->has_changed()) {
 				RenderingServer::get_singleton()->draw(true, scaled_process_step); // flush visual commands
-				Engine::get_singleton()->increment_frames_drawn();
+				engine.increment_frames_drawn();
 			}
 		} else {
 			RenderingServer::get_singleton()->draw(true, scaled_process_step); // flush visual commands
-			Engine::get_singleton()->increment_frames_drawn();
+			engine.increment_frames_drawn();
 			force_redraw_requested = false;
 		}
 	}
@@ -4372,7 +4373,7 @@ bool Main::iteration() {
 	}
 
 	frames++;
-	Engine::get_singleton()->_process_frames++;
+	engine._process_frames++;
 
 	if (frame > 1000000) {
 		// Wait a few seconds before printing FPS, as FPS reporting just after the engine has started is inaccurate.
@@ -4388,7 +4389,7 @@ bool Main::iteration() {
 			hide_print_fps_attempts--;
 		}
 
-		Engine::get_singleton()->_fps = frames;
+		engine._fps = frames;
 		performance->set_process_time(USEC_TO_SEC(process_max));
 		performance->set_physics_process_time(USEC_TO_SEC(physics_process_max));
 		performance->set_navigation_process_time(USEC_TO_SEC(navigation_process_max));
@@ -4409,7 +4410,7 @@ bool Main::iteration() {
 #ifdef TOOLS_ENABLED
 	bool quit_after_timeout = false;
 #endif
-	if ((quit_after > 0) && (Engine::get_singleton()->_process_frames >= quit_after)) {
+	if ((quit_after > 0) && (engine._process_frames >= quit_after)) {
 #ifdef TOOLS_ENABLED
 		quit_after_timeout = true;
 #endif
