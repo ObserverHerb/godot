@@ -1736,6 +1736,10 @@ uint64_t Engine::get_process_frames() const {
 	return ::Engine::get_singleton()->get_process_frames();
 }
 
+double Engine::get_unscaled_delta() const {
+	return ::Engine::get_singleton()->get_process_step();
+}
+
 void Engine::set_time_scale(double p_scale) {
 	::Engine::get_singleton()->set_time_scale(p_scale);
 }
@@ -1886,6 +1890,7 @@ void Engine::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("get_frames_per_second"), &Engine::get_frames_per_second);
 	ClassDB::bind_method(D_METHOD("get_physics_frames"), &Engine::get_physics_frames);
 	ClassDB::bind_method(D_METHOD("get_process_frames"), &Engine::get_process_frames);
+	ClassDB::bind_method(D_METHOD("get_unscaled_delta"), &Engine::get_unscaled_delta);
 
 	ClassDB::bind_method(D_METHOD("get_main_loop"), &Engine::get_main_loop);
 
