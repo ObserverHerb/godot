@@ -48,6 +48,8 @@
 #include "scene/gui/separator.h"
 #include "scene/main/window.h"
 
+const int GRID_CURSOR_SIZE = 50;
+
 void GridMapEditor::_configure() {
 	if (!node) {
 		return;
