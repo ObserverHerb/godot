@@ -791,11 +791,11 @@ if not env.msvc:
     # Specifying GNU extensions support explicitly, which are supported by
     # both GCC and Clang. Both currently default to gnu11 and gnu++14.
     env.Prepend(CFLAGS=["-std=gnu11"])
-    env.Prepend(CXXFLAGS=["-std=gnu++17"])
+    env.Prepend(CXXFLAGS=["-std=gnu++23"])
 else:
     # MSVC doesn't have clear C standard support, /std only covers C++.
     # We apply it to CCFLAGS (both C and C++ code) in case it impacts C features.
-    env.Prepend(CCFLAGS=["/std:c++17"])
+    env.Prepend(CCFLAGS=["/std:c++latest"])
     # MSVC is non-conforming with the C++ standard by default, so we enable more conformance.
     # Note that this is still not complete conformance, as certain Windows-related headers
     # don't compile under complete conformance.
