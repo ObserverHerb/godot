@@ -1033,10 +1033,10 @@ void ItemList::_notification(int p_what) {
 			force_update_list_size();
 
 			int scroll_bar_minwidth = scroll_bar->get_minimum_size().x;
-			scroll_bar->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END, -scroll_bar_minwidth);
-			scroll_bar->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END, 0);
-			scroll_bar->set_anchor_and_offset(SIDE_TOP, ANCHOR_BEGIN, theme_cache.panel_style->get_margin(SIDE_TOP));
-			scroll_bar->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, -theme_cache.panel_style->get_margin(SIDE_BOTTOM));
+			scroll_bar->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END_F, -scroll_bar_minwidth);
+			scroll_bar->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END_F, 0);
+			scroll_bar->set_anchor_and_offset(SIDE_TOP, ANCHOR_BEGIN_F, theme_cache.panel_style->get_margin(SIDE_TOP));
+			scroll_bar->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, -theme_cache.panel_style->get_margin(SIDE_BOTTOM));
 
 			Size2 size = get_size();
 			int width = size.width - theme_cache.panel_style->get_minimum_size().width;

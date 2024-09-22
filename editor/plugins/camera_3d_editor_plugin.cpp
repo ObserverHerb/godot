@@ -67,8 +67,8 @@ Camera3DEditor::Camera3DEditor() {
 
 	preview->set_text(TTR("Preview"));
 	preview->set_toggle_mode(true);
-	preview->set_anchor(SIDE_LEFT, Control::ANCHOR_END);
-	preview->set_anchor(SIDE_RIGHT, Control::ANCHOR_END);
+	preview->set_anchor(SIDE_LEFT, Control::ANCHOR_END_F);
+	preview->set_anchor(SIDE_RIGHT, Control::ANCHOR_END_F);
 	preview->set_offset(SIDE_LEFT, -60);
 	preview->set_offset(SIDE_RIGHT, 0);
 	preview->set_offset(SIDE_TOP, 0);

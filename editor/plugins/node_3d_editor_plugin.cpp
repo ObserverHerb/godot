@@ -5491,17 +5491,17 @@ Node3DEditorViewport::Node3DEditorViewport(Node3DEditor *p_spatial_editor, int p
 
 	bottom_center_vbox = memnew(VBoxContainer);
 	bottom_center_vbox->set_anchors_preset(LayoutPreset::PRESET_CENTER);
-	bottom_center_vbox->set_anchor_and_offset(SIDE_TOP, ANCHOR_END, -20 * EDSCALE);
-	bottom_center_vbox->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, -10 * EDSCALE);
+	bottom_center_vbox->set_anchor_and_offset(SIDE_TOP, ANCHOR_END_F, -20 * EDSCALE);
+	bottom_center_vbox->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, -10 * EDSCALE);
 	bottom_center_vbox->set_h_grow_direction(GROW_DIRECTION_BOTH);
 	bottom_center_vbox->set_v_grow_direction(GROW_DIRECTION_BEGIN);
 	surface->add_child(bottom_center_vbox);
 
 	info_panel = memnew(PanelContainer);
-	info_panel->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END, -90 * EDSCALE);
-	info_panel->set_anchor_and_offset(SIDE_TOP, ANCHOR_END, -90 * EDSCALE);
-	info_panel->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END, -10 * EDSCALE);
-	info_panel->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, -10 * EDSCALE);
+	info_panel->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END_F, -90 * EDSCALE);
+	info_panel->set_anchor_and_offset(SIDE_TOP, ANCHOR_END_F, -90 * EDSCALE);
+	info_panel->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END_F, -10 * EDSCALE);
+	info_panel->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, -10 * EDSCALE);
 	info_panel->set_h_grow_direction(GROW_DIRECTION_BEGIN);
 	info_panel->set_v_grow_direction(GROW_DIRECTION_BEGIN);
 	info_panel->set_mouse_filter(MOUSE_FILTER_IGNORE);
@@ -5512,7 +5512,7 @@ Node3DEditorViewport::Node3DEditorViewport(Node3DEditor *p_spatial_editor, int p
 	info_panel->add_child(info_label);
 
 	cinema_label = memnew(Label);
-	cinema_label->set_anchor_and_offset(SIDE_TOP, ANCHOR_BEGIN, 10 * EDSCALE);
+	cinema_label->set_anchor_and_offset(SIDE_TOP, ANCHOR_BEGIN_F, 10 * EDSCALE);
 	cinema_label->set_h_grow_direction(GROW_DIRECTION_END);
 	cinema_label->set_horizontal_alignment(HORIZONTAL_ALIGNMENT_CENTER);
 	cinema_label->set_vertical_alignment(VERTICAL_ALIGNMENT_CENTER);
@@ -5569,10 +5569,10 @@ Node3DEditorViewport::Node3DEditorViewport(Node3DEditor *p_spatial_editor, int p
 	position_control->set_navigation_mode(Node3DEditorViewport::NAVIGATION_MOVE);
 	position_control->set_custom_minimum_size(Size2(navigation_control_size, navigation_control_size) * EDSCALE);
 	position_control->set_h_size_flags(SIZE_SHRINK_END);
-	position_control->set_anchor_and_offset(SIDE_LEFT, ANCHOR_BEGIN, 0);
-	position_control->set_anchor_and_offset(SIDE_TOP, ANCHOR_END, -navigation_control_size * EDSCALE);
-	position_control->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_BEGIN, navigation_control_size * EDSCALE);
-	position_control->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, 0);
+	position_control->set_anchor_and_offset(SIDE_LEFT, ANCHOR_BEGIN_F, 0);
+	position_control->set_anchor_and_offset(SIDE_TOP, ANCHOR_END_F, -navigation_control_size * EDSCALE);
+	position_control->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_BEGIN_F, navigation_control_size * EDSCALE);
+	position_control->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, 0);
 	position_control->set_viewport(this);
 	surface->add_child(position_control);
 
@@ -5580,10 +5580,10 @@ Node3DEditorViewport::Node3DEditorViewport(Node3DEditor *p_spatial_editor, int p
 	look_control->set_navigation_mode(Node3DEditorViewport::NAVIGATION_LOOK);
 	look_control->set_custom_minimum_size(Size2(navigation_control_size, navigation_control_size) * EDSCALE);
 	look_control->set_h_size_flags(SIZE_SHRINK_END);
-	look_control->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END, -navigation_control_size * EDSCALE);
-	look_control->set_anchor_and_offset(SIDE_TOP, ANCHOR_END, -navigation_control_size * EDSCALE);
-	look_control->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END, 0);
-	look_control->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, 0);
+	look_control->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END_F, -navigation_control_size * EDSCALE);
+	look_control->set_anchor_and_offset(SIDE_TOP, ANCHOR_END_F, -navigation_control_size * EDSCALE);
+	look_control->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END_F, 0);
+	look_control->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, 0);
 	look_control->set_viewport(this);
 	surface->add_child(look_control);
 

@@ -54,6 +54,11 @@
 
 // TODO: Decouple controls from their editor plugin and get rid of this.
 #ifdef TOOLS_ENABLED
+enum Control::Anchor {
+	ANCHOR_BEGIN = static_cast<int>(Control::ANCHOR_BEGIN_F),
+	ANCHOR_END = static_cast<int>(Control::ANCHOR_END_F)
+};
+
 Dictionary Control::_edit_get_state() const {
 	Dictionary s;
 	s["rotation"] = get_rotation();
@@ -1012,56 +1017,56 @@ int Control::_get_anchors_layout_preset() const {
 	float top = get_anchor(SIDE_TOP);
 	float bottom = get_anchor(SIDE_BOTTOM);
 
-	if (left == ANCHOR_BEGIN && right == ANCHOR_BEGIN && top == ANCHOR_BEGIN && bottom == ANCHOR_BEGIN) {
+	if (left == ANCHOR_BEGIN_F && right == ANCHOR_BEGIN_F && top == ANCHOR_BEGIN_F && bottom == ANCHOR_BEGIN_F) {
 		return (int)LayoutPreset::PRESET_TOP_LEFT;
 	}
-	if (left == ANCHOR_END && right == ANCHOR_END && top == ANCHOR_BEGIN && bottom == ANCHOR_BEGIN) {
+	if (left == ANCHOR_END_F && right == ANCHOR_END_F && top == ANCHOR_BEGIN_F && bottom == ANCHOR_BEGIN_F) {
 		return (int)LayoutPreset::PRESET_TOP_RIGHT;
 	}
-	if (left == ANCHOR_BEGIN && right == ANCHOR_BEGIN && top == ANCHOR_END && bottom == ANCHOR_END) {
+	if (left == ANCHOR_BEGIN_F && right == ANCHOR_BEGIN_F && top == ANCHOR_END_F && bottom == ANCHOR_END_F) {
 		return (int)LayoutPreset::PRESET_BOTTOM_LEFT;
 	}
-	if (left == ANCHOR_END && right == ANCHOR_END && top == ANCHOR_END && bottom == ANCHOR_END) {
+	if (left == ANCHOR_END_F && right == ANCHOR_END_F && top == ANCHOR_END_F && bottom == ANCHOR_END_F) {
 		return (int)LayoutPreset::PRESET_BOTTOM_RIGHT;
 	}
 
-	if (left == ANCHOR_BEGIN && right == ANCHOR_BEGIN && top == 0.5 && bottom == 0.5) {
+	if (left == ANCHOR_BEGIN_F && right == ANCHOR_BEGIN_F && top == 0.5 && bottom == 0.5) {
 		return (int)LayoutPreset::PRESET_CENTER_LEFT;
 	}
-	if (left == ANCHOR_END && right == ANCHOR_END && top == 0.5 && bottom == 0.5) {
+	if (left == ANCHOR_END_F && right == ANCHOR_END_F && top == 0.5 && bottom == 0.5) {
 		return (int)LayoutPreset::PRESET_CENTER_RIGHT;
 	}
-	if (left == 0.5 && right == 0.5 && top == ANCHOR_BEGIN && bottom == ANCHOR_BEGIN) {
+	if (left == 0.5 && right == 0.5 && top == ANCHOR_BEGIN_F && bottom == ANCHOR_BEGIN_F) {
 		return (int)LayoutPreset::PRESET_CENTER_TOP;
 	}
-	if (left == 0.5 && right == 0.5 && top == ANCHOR_END && bottom == ANCHOR_END) {
+	if (left == 0.5 && right == 0.5 && top == ANCHOR_END_F && bottom == ANCHOR_END_F) {
 		return (int)LayoutPreset::PRESET_CENTER_BOTTOM;
 	}
 	if (left == 0.5 && right == 0.5 && top == 0.5 && bottom == 0.5) {
 		return (int)LayoutPreset::PRESET_CENTER;
 	}
 
-	if (left == ANCHOR_BEGIN && right == ANCHOR_BEGIN && top == ANCHOR_BEGIN && bottom == ANCHOR_END) {
+	if (left == ANCHOR_BEGIN_F && right == ANCHOR_BEGIN_F && top == ANCHOR_BEGIN_F && bottom == ANCHOR_END_F) {
 		return (int)LayoutPreset::PRESET_LEFT_WIDE;
 	}
-	if (left == ANCHOR_END && right == ANCHOR_END && top == ANCHOR_BEGIN && bottom == ANCHOR_END) {
+	if (left == ANCHOR_END_F && right == ANCHOR_END_F && top == ANCHOR_BEGIN_F && bottom == ANCHOR_END_F) {
 		return (int)LayoutPreset::PRESET_RIGHT_WIDE;
 	}
-	if (left == ANCHOR_BEGIN && right == ANCHOR_END && top == ANCHOR_BEGIN && bottom == ANCHOR_BEGIN) {
+	if (left == ANCHOR_BEGIN_F && right == ANCHOR_END_F && top == ANCHOR_BEGIN_F && bottom == ANCHOR_BEGIN_F) {
 		return (int)LayoutPreset::PRESET_TOP_WIDE;
 	}
-	if (left == ANCHOR_BEGIN && right == ANCHOR_END && top == ANCHOR_END && bottom == ANCHOR_END) {
+	if (left == ANCHOR_BEGIN_F && right == ANCHOR_END_F && top == ANCHOR_END_F && bottom == ANCHOR_END_F) {
 		return (int)LayoutPreset::PRESET_BOTTOM_WIDE;
 	}
 
-	if (left == 0.5 && right == 0.5 && top == ANCHOR_BEGIN && bottom == ANCHOR_END) {
+	if (left == 0.5 && right == 0.5 && top == ANCHOR_BEGIN_F && bottom == ANCHOR_END_F) {
 		return (int)LayoutPreset::PRESET_VCENTER_WIDE;
 	}
-	if (left == ANCHOR_BEGIN && right == ANCHOR_END && top == 0.5 && bottom == 0.5) {
+	if (left == ANCHOR_BEGIN_F && right == ANCHOR_END_F && top == 0.5 && bottom == 0.5) {
 		return (int)LayoutPreset::PRESET_HCENTER_WIDE;
 	}
 
-	if (left == ANCHOR_BEGIN && right == ANCHOR_END && top == ANCHOR_BEGIN && bottom == ANCHOR_END) {
+	if (left == ANCHOR_BEGIN_F && right == ANCHOR_END_F && top == ANCHOR_BEGIN_F && bottom == ANCHOR_END_F) {
 		return (int)LayoutPreset::PRESET_FULL_RECT;
 	}
 
@@ -1083,21 +1088,21 @@ void Control::set_anchors_preset(LayoutPreset p_preset, bool p_keep_offsets) {
 		case PRESET_LEFT_WIDE:
 		case PRESET_HCENTER_WIDE:
 		case PRESET_FULL_RECT:
-			set_anchor(SIDE_LEFT, ANCHOR_BEGIN, p_keep_offsets);
+			set_anchor(SIDE_LEFT, ANCHOR_BEGIN_F, p_keep_offsets);
 			break;
 
 		case PRESET_CENTER_TOP:
 		case PRESET_CENTER_BOTTOM:
 		case PRESET_CENTER:
 		case PRESET_VCENTER_WIDE:
-			set_anchor(SIDE_LEFT, 0.5, p_keep_offsets);
+			set_anchor(SIDE_LEFT, ANCHOR_CENTER_F, p_keep_offsets);
 			break;
 
 		case PRESET_TOP_RIGHT:
 		case PRESET_BOTTOM_RIGHT:
 		case PRESET_CENTER_RIGHT:
 		case PRESET_RIGHT_WIDE:
-			set_anchor(SIDE_LEFT, ANCHOR_END, p_keep_offsets);
+			set_anchor(SIDE_LEFT, ANCHOR_END_F, p_keep_offsets);
 			break;
 	}
 
@@ -1111,21 +1116,21 @@ void Control::set_anchors_preset(LayoutPreset p_preset, bool p_keep_offsets) {
 		case PRESET_TOP_WIDE:
 		case PRESET_VCENTER_WIDE:
 		case PRESET_FULL_RECT:
-			set_anchor(SIDE_TOP, ANCHOR_BEGIN, p_keep_offsets);
+			set_anchor(SIDE_TOP, ANCHOR_BEGIN_F, p_keep_offsets);
 			break;
 
 		case PRESET_CENTER_LEFT:
 		case PRESET_CENTER_RIGHT:
 		case PRESET_CENTER:
 		case PRESET_HCENTER_WIDE:
-			set_anchor(SIDE_TOP, 0.5, p_keep_offsets);
+			set_anchor(SIDE_TOP, ANCHOR_CENTER_F, p_keep_offsets);
 			break;
 
 		case PRESET_BOTTOM_LEFT:
 		case PRESET_BOTTOM_RIGHT:
 		case PRESET_CENTER_BOTTOM:
 		case PRESET_BOTTOM_WIDE:
-			set_anchor(SIDE_TOP, ANCHOR_END, p_keep_offsets);
+			set_anchor(SIDE_TOP, ANCHOR_END_F, p_keep_offsets);
 			break;
 	}
 
@@ -1135,14 +1140,14 @@ void Control::set_anchors_preset(LayoutPreset p_preset, bool p_keep_offsets) {
 		case PRESET_BOTTOM_LEFT:
 		case PRESET_CENTER_LEFT:
 		case PRESET_LEFT_WIDE:
-			set_anchor(SIDE_RIGHT, ANCHOR_BEGIN, p_keep_offsets);
+			set_anchor(SIDE_RIGHT, ANCHOR_BEGIN_F, p_keep_offsets);
 			break;
 
 		case PRESET_CENTER_TOP:
 		case PRESET_CENTER_BOTTOM:
 		case PRESET_CENTER:
 		case PRESET_VCENTER_WIDE:
-			set_anchor(SIDE_RIGHT, 0.5, p_keep_offsets);
+			set_anchor(SIDE_RIGHT, ANCHOR_CENTER_F, p_keep_offsets);
 			break;
 
 		case PRESET_TOP_RIGHT:
@@ -1153,7 +1158,7 @@ void Control::set_anchors_preset(LayoutPreset p_preset, bool p_keep_offsets) {
 		case PRESET_BOTTOM_WIDE:
 		case PRESET_HCENTER_WIDE:
 		case PRESET_FULL_RECT:
-			set_anchor(SIDE_RIGHT, ANCHOR_END, p_keep_offsets);
+			set_anchor(SIDE_RIGHT, ANCHOR_END_F, p_keep_offsets);
 			break;
 	}
 
@@ -1163,14 +1168,14 @@ void Control::set_anchors_preset(LayoutPreset p_preset, bool p_keep_offsets) {
 		case PRESET_TOP_RIGHT:
 		case PRESET_CENTER_TOP:
 		case PRESET_TOP_WIDE:
-			set_anchor(SIDE_BOTTOM, ANCHOR_BEGIN, p_keep_offsets);
+			set_anchor(SIDE_BOTTOM, ANCHOR_BEGIN_F, p_keep_offsets);
 			break;
 
 		case PRESET_CENTER_LEFT:
 		case PRESET_CENTER_RIGHT:
 		case PRESET_CENTER:
 		case PRESET_HCENTER_WIDE:
-			set_anchor(SIDE_BOTTOM, 0.5, p_keep_offsets);
+			set_anchor(SIDE_BOTTOM, ANCHOR_CENTER_F, p_keep_offsets);
 			break;
 
 		case PRESET_BOTTOM_LEFT:
@@ -1181,7 +1186,7 @@ void Control::set_anchors_preset(LayoutPreset p_preset, bool p_keep_offsets) {
 		case PRESET_BOTTOM_WIDE:
 		case PRESET_VCENTER_WIDE:
 		case PRESET_FULL_RECT:
-			set_anchor(SIDE_BOTTOM, ANCHOR_END, p_keep_offsets);
+			set_anchor(SIDE_BOTTOM, ANCHOR_END_F, p_keep_offsets);
 			break;
 	}
 }
