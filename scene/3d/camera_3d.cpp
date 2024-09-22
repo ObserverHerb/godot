@@ -692,6 +692,8 @@ void Camera3D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("set_cull_mask_value", "layer_number", "value"), &Camera3D::set_cull_mask_value);
 	ClassDB::bind_method(D_METHOD("get_cull_mask_value", "layer_number"), &Camera3D::get_cull_mask_value);
 
+	BIND_CONSTANT(NOTIFICATION_SIZE_CHANGED);
+
 	//ClassDB::bind_method(D_METHOD("_camera_make_current"),&Camera::_camera_make_current );
 
 	ADD_PROPERTY(PropertyInfo(Variant::INT, "keep_aspect", PROPERTY_HINT_ENUM, "Keep Width,Keep Height"), "set_keep_aspect_mode", "get_keep_aspect_mode");
@@ -756,6 +758,7 @@ void Camera3D::set_size(real_t p_size) {
 	ERR_FAIL_COND(p_size <= CMP_EPSILON);
 	size = p_size;
 	_update_camera_mode();
+	notification(NOTIFICATION_SIZE_CHANGED);
 }
 
 void Camera3D::set_near(real_t p_near) {

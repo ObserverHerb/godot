@@ -145,7 +145,8 @@ protected:
 public:
 	enum {
 		NOTIFICATION_BECAME_CURRENT = 50,
-		NOTIFICATION_LOST_CURRENT = 51
+		NOTIFICATION_LOST_CURRENT = 51,
+		NOTIFICATION_SIZE_CHANGED = 52
 	};
 
 	void set_perspective(real_t p_fovy_degrees, real_t p_z_near, real_t p_z_far);
