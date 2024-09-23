@@ -129,8 +129,8 @@ EditorLayoutsDialog::EditorLayoutsDialog() {
 	makevb->add_child(name);
 	name->set_placeholder(TTR("Or enter new layout name"));
 	name->set_offset(SIDE_TOP, 5);
-	name->set_anchor_and_offset(SIDE_LEFT, Control::ANCHOR_BEGIN, 5);
-	name->set_anchor_and_offset(SIDE_RIGHT, Control::ANCHOR_END, -5);
+	name->set_anchor_and_offset(SIDE_LEFT, Control::ANCHOR_BEGIN_F, 5);
+	name->set_anchor_and_offset(SIDE_RIGHT, Control::ANCHOR_END_F, -5);
 	name->connect(SceneStringName(gui_input), callable_mp(this, &EditorLayoutsDialog::_line_gui_input));
 	name->connect(SceneStringName(focus_entered), callable_mp(this, &EditorLayoutsDialog::_deselect_layout_names));
 	name->connect(SceneStringName(text_changed), callable_mp(this, &EditorLayoutsDialog::_update_ok_disable_state).unbind(1));

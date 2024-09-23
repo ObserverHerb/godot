@@ -429,8 +429,8 @@ void GraphEdit::_update_scroll() {
 	Size2 vmin = v_scrollbar->get_combined_minimum_size();
 
 	// Avoid scrollbar overlapping.
-	h_scrollbar->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END, v_scrollbar->is_visible() ? -vmin.width : 0);
-	v_scrollbar->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, h_scrollbar->is_visible() ? -hmin.height : 0);
+	h_scrollbar->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END_F, v_scrollbar->is_visible() ? -vmin.width : 0);
+	v_scrollbar->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, h_scrollbar->is_visible() ? -hmin.height : 0);
 
 	set_block_minimum_size_adjust(false);
 
@@ -732,15 +732,15 @@ void GraphEdit::_notification(int p_what) {
 			Size2 hmin = h_scrollbar->get_combined_minimum_size();
 			Size2 vmin = v_scrollbar->get_combined_minimum_size();
 
-			h_scrollbar->set_anchor_and_offset(SIDE_LEFT, ANCHOR_BEGIN, 0);
-			h_scrollbar->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END, 0);
-			h_scrollbar->set_anchor_and_offset(SIDE_TOP, ANCHOR_END, -hmin.height);
-			h_scrollbar->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, 0);
+			h_scrollbar->set_anchor_and_offset(SIDE_LEFT, ANCHOR_BEGIN_F, 0);
+			h_scrollbar->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END_F, 0);
+			h_scrollbar->set_anchor_and_offset(SIDE_TOP, ANCHOR_END_F, -hmin.height);
+			h_scrollbar->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, 0);
 
-			v_scrollbar->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END, -vmin.width);
-			v_scrollbar->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END, 0);
-			v_scrollbar->set_anchor_and_offset(SIDE_TOP, ANCHOR_BEGIN, 0);
-			v_scrollbar->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, 0);
+			v_scrollbar->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END_F, -vmin.width);
+			v_scrollbar->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END_F, 0);
+			v_scrollbar->set_anchor_and_offset(SIDE_TOP, ANCHOR_BEGIN_F, 0);
+			v_scrollbar->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, 0);
 		} break;
 		case NOTIFICATION_DRAW: {
 			// Draw background fill.

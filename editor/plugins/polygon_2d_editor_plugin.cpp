@@ -133,8 +133,8 @@ void Polygon2DEditor::_notification(int p_what) {
 			// Avoid scrollbar overlapping.
 			Size2 hmin = uv_hscroll->get_combined_minimum_size();
 			Size2 vmin = uv_vscroll->get_combined_minimum_size();
-			uv_hscroll->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END, -vmin.width);
-			uv_vscroll->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, -hmin.height);
+			uv_hscroll->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END_F, -vmin.width);
+			uv_vscroll->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, -hmin.height);
 			[[fallthrough]];
 		}
 		case NOTIFICATION_THEME_CHANGED: {

@@ -6985,8 +6985,8 @@ EditorNode::EditorNode() {
 
 	// Take up all screen.
 	gui_base->set_anchors_and_offsets_preset(Control::PRESET_FULL_RECT);
-	gui_base->set_anchor(SIDE_RIGHT, Control::ANCHOR_END);
-	gui_base->set_anchor(SIDE_BOTTOM, Control::ANCHOR_END);
+	gui_base->set_anchor(SIDE_RIGHT, Control::ANCHOR_END_F);
+	gui_base->set_anchor(SIDE_BOTTOM, Control::ANCHOR_END_F);
 	gui_base->set_end(Point2(0, 0));
 
 	main_vbox = memnew(VBoxContainer);

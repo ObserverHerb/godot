@@ -52,10 +52,11 @@ class Control : public CanvasItem {
 #endif
 
 public:
-	enum Anchor {
-		ANCHOR_BEGIN = 0,
-		ANCHOR_END = 1
-	};
+	static constexpr float ANCHOR_BEGIN_F = 0.0;
+	static constexpr float ANCHOR_CENTER_F = 0.5;
+	static constexpr float ANCHOR_END_F = 1.0;
+
+	enum Anchor;
 
 	enum GrowDirection {
 		GROW_DIRECTION_BEGIN,
@@ -185,7 +186,7 @@ private:
 		bool stored_use_custom_anchors = false;
 
 		real_t offset[4] = { 0.0, 0.0, 0.0, 0.0 };
-		real_t anchor[4] = { ANCHOR_BEGIN, ANCHOR_BEGIN, ANCHOR_BEGIN, ANCHOR_BEGIN };
+		real_t anchor[4] = { ANCHOR_BEGIN_F, ANCHOR_BEGIN_F, ANCHOR_BEGIN_F, ANCHOR_BEGIN_F };
 		FocusMode focus_mode = FOCUS_NONE;
 		GrowDirection h_grow = GROW_DIRECTION_END;
 		GrowDirection v_grow = GROW_DIRECTION_END;

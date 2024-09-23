@@ -2847,7 +2847,7 @@ _FORCE_INLINE_ float RichTextLabel::_update_scroll_exceeds(float p_total_height,
 			scroll_visible = true;
 			scroll_w = vscroll->get_combined_minimum_size().width;
 			vscroll->show();
-			vscroll->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END, -scroll_w);
+			vscroll->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END_F, -scroll_w);
 		} else {
 			scroll_visible = false;
 			scroll_w = 0;
@@ -6668,9 +6668,9 @@ RichTextLabel::RichTextLabel(const String &p_text) {
 	add_child(vscroll, false, INTERNAL_MODE_FRONT);
 	vscroll->set_drag_node(String(".."));
 	vscroll->set_step(1);
-	vscroll->set_anchor_and_offset(SIDE_TOP, ANCHOR_BEGIN, 0);
-	vscroll->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, 0);
-	vscroll->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END, 0);
+	vscroll->set_anchor_and_offset(SIDE_TOP, ANCHOR_BEGIN_F, 0);
+	vscroll->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, 0);
+	vscroll->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END_F, 0);
 	vscroll->connect(SceneStringName(value_changed), callable_mp(this, &RichTextLabel::_scroll_changed));
 	vscroll->set_step(1);
 	vscroll->hide();

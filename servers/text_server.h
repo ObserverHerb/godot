@@ -181,10 +181,14 @@ public:
 		FEATURE_UNICODE_SECURITY = 1 << 14,
 	};
 
+	static constexpr float CONTOUR_CURVE_TAG_ON_F = 1.0;
+	static constexpr float CONTOUR_CURVE_TAG_OFF_CONIC_F = 0.0;
+	static constexpr float CONTOUR_CURVE_TAG_OFF_CUBIC_F = 2.0;
+
 	enum ContourPointTag {
-		CONTOUR_CURVE_TAG_ON = 0x01,
-		CONTOUR_CURVE_TAG_OFF_CONIC = 0x00,
-		CONTOUR_CURVE_TAG_OFF_CUBIC = 0x02
+		CONTOUR_CURVE_TAG_ON = static_cast<int>(CONTOUR_CURVE_TAG_ON_F),
+		CONTOUR_CURVE_TAG_OFF_CONIC = static_cast<int>(CONTOUR_CURVE_TAG_OFF_CONIC_F),
+		CONTOUR_CURVE_TAG_OFF_CUBIC = static_cast<int>(CONTOUR_CURVE_TAG_OFF_CUBIC_F)
 	};
 
 	enum SpacingType {
