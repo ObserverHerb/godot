@@ -180,13 +180,15 @@ class Node3DEditorViewport : public Control {
 	};
 
 public:
+	static constexpr float FRAME_TIME_HISTORY_F = 20.0;
+
 	enum {
 		GIZMO_BASE_LAYER = 27,
 		GIZMO_EDIT_LAYER = 26,
 		GIZMO_GRID_LAYER = 25,
 		MISC_TOOL_LAYER = 24,
 
-		FRAME_TIME_HISTORY = 20,
+		FRAME_TIME_HISTORY = static_cast<int>(FRAME_TIME_HISTORY_F)
 	};
 
 	enum NavigationScheme {
