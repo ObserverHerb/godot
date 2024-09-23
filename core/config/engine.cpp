@@ -107,10 +107,19 @@ uint32_t Engine::get_frame_delay() const {
 
 void Engine::set_time_scale(double p_scale) {
 	_time_scale = p_scale;
+	set_physics_time_scale(p_scale);
 }
 
 double Engine::get_time_scale() const {
 	return _time_scale;
+}
+
+void Engine::set_physics_time_scale(double p_scale) {
+	_physics_time_scale = p_scale;
+}
+
+double Engine::get_physics_time_scale() const {
+	return _physics_time_scale;
 }
 
 Dictionary Engine::get_version_info() const {

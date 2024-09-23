@@ -1075,6 +1075,29 @@ void Node3D::look_at_from_position(const Vector3 &p_pos, const Vector3 &p_target
 	set_scale(original_scale);
 }
 
+Dictionary Node3D::shoot_ray(const Vector3 &direction, float range, uint32_t layer) {
+	PhysicsDirectSpaceState3D::RayResult result;
+	PhysicsDirectSpaceState3D::RayParameters ray_parameters;
+	ray_parameters.from = get_position();
+	ray_parameters.to = ray_parameters.from + get_quaternion().xform_inv(direction) * range;
+	ray_parameters.collision_mask = layer;
+	bool success = get_world_3d()->get_direct_space_state()->intersect_ray(ray_parameters, result);
+
+	if (!success) {
+		return Dictionary();
+	}
+
+	Dictionary d;
+	d["position"] = result.position;
+	d["normal"] = result.normal;
+	d["collider_id"] = result.collider_id;
+	d["collider"] = result.collider;
+	d["shape"] = result.shape;
+	d["rid"] = result.rid;
+
+	return d;
+}
+
 Vector3 Node3D::to_local(Vector3 p_global) const {
 	ERR_READ_THREAD_GUARD_V(Vector3());
 	return get_global_transform().affine_inverse().xform(p_global);
@@ -1319,6 +1342,8 @@ void Node3D::_bind_methods() {
 
 	ClassDB::bind_method(D_METHOD("look_at", "target", "up", "use_model_front"), &Node3D::look_at, DEFVAL(Vector3(0, 1, 0)), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("look_at_from_position", "position", "target", "up", "use_model_front"), &Node3D::look_at_from_position, DEFVAL(Vector3(0, 1, 0)), DEFVAL(false));
+
+	ClassDB::bind_method(D_METHOD("shoot_ray", "direction", "range", "layer"), &Node3D::shoot_ray);
 
 	ClassDB::bind_method(D_METHOD("to_local", "global_point"), &Node3D::to_local);
 	ClassDB::bind_method(D_METHOD("to_global", "local_point"), &Node3D::to_global);

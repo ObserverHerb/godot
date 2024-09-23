@@ -4237,7 +4237,8 @@ bool Main::iteration() {
 
 	const int physics_ticks_per_second = engine.get_physics_ticks_per_second();
 	const double physics_step = 1.0 / physics_ticks_per_second;
-	const double scaled_physics_step = physics_step * time_scale;
+	const double physics_time_scale = engine.get_physics_time_scale();
+	const double scaled_physics_step = physics_step * physics_time_scale;
 
 	MainFrameTime advance = main_timer_sync.advance(physics_step, physics_ticks_per_second);
 
