@@ -59,14 +59,17 @@ public:
 	void process_joypads();
 
 private:
+	static constexpr float MAX_JOY_AXIS_F = 32768.0;
+	static constexpr float MAX_TRIGGER_F = 255.0;
+
 	enum {
 		JOYPADS_MAX = 16,
 		JOY_AXIS_COUNT = 6,
 		MIN_JOY_AXIS = 10,
-		MAX_JOY_AXIS = 32768,
+		MAX_JOY_AXIS = static_cast<int>(MAX_JOY_AXIS_F),
 		MAX_JOY_BUTTONS = 128,
 		KEY_EVENT_BUFFER_SIZE = 512,
-		MAX_TRIGGER = 255
+		MAX_TRIGGER = static_cast<int>(MAX_TRIGGER_F)
 	};
 
 	struct dinput_gamepad {
