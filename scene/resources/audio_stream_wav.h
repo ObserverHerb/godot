@@ -42,7 +42,7 @@ class AudioStreamWAV;
 class AudioStreamPlaybackWAV : public AudioStreamPlayback {
 	GDCLASS(AudioStreamPlaybackWAV, AudioStreamPlayback);
 	static constexpr float MIX_FRAC_BITS_F = 13.0;
-	static constexpr float MIX_FRAC_LEN_F = (1 << MIX_FRAC_BITS_F)
+	static constexpr float MIX_FRAC_LEN_F = (1 << static_cast<int>(MIX_FRAC_BITS_F));
 
 	enum {
 		MIX_FRAC_BITS = static_cast<int>(MIX_FRAC_BITS_F),
