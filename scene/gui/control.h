@@ -56,7 +56,7 @@ public:
 	static constexpr float ANCHOR_CENTER_F = 0.5;
 	static constexpr float ANCHOR_END_F = 1.0;
 
-	enum Anchor;
+	enum Anchor : int;
 
 	enum GrowDirection {
 		GROW_DIRECTION_BEGIN,
