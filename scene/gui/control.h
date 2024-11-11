@@ -33,7 +33,6 @@
 
 #include "core/math/transform_2d.h"
 #include "core/object/gdvirtual.gen.inc"
-#include "core/templates/rid.h"
 #include "scene/main/canvas_item.h"
 #include "scene/main/timer.h"
 #include "scene/resources/theme.h"
@@ -49,7 +48,7 @@ class Control : public CanvasItem {
 
 #ifdef TOOLS_ENABLED
 	bool saving = false;
-#endif
+#endif //TOOLS_ENABLED
 
 public:
 	static constexpr float ANCHOR_BEGIN_F = 0.0;
@@ -142,9 +141,14 @@ public:
 
 	enum LayoutDirection {
 		LAYOUT_DIRECTION_INHERITED,
-		LAYOUT_DIRECTION_LOCALE,
+		LAYOUT_DIRECTION_APPLICATION_LOCALE,
 		LAYOUT_DIRECTION_LTR,
-		LAYOUT_DIRECTION_RTL
+		LAYOUT_DIRECTION_RTL,
+		LAYOUT_DIRECTION_SYSTEM_LOCALE,
+		LAYOUT_DIRECTION_MAX,
+#ifndef DISABLE_DEPRECATED
+		LAYOUT_DIRECTION_LOCALE = LAYOUT_DIRECTION_APPLICATION_LOCALE,
+#endif // DISABLE_DEPRECATED
 	};
 
 	enum TextDirection {
@@ -263,6 +267,7 @@ private:
 		// Extra properties.
 
 		String tooltip;
+		AutoTranslateMode tooltip_auto_translate_mode = AUTO_TRANSLATE_MODE_INHERIT;
 
 	} data;
 
@@ -392,8 +397,6 @@ public:
 	virtual Size2 _edit_get_scale() const override;
 
 	virtual void _edit_set_rect(const Rect2 &p_edit_rect) override;
-	virtual Rect2 _edit_get_rect() const override;
-	virtual bool _edit_use_rect() const override;
 
 	virtual void _edit_set_rotation(real_t p_rotation) override;
 	virtual real_t _edit_get_rotation() const override;
@@ -404,7 +407,13 @@ public:
 	virtual bool _edit_use_pivot() const override;
 
 	virtual Size2 _edit_get_minimum_size() const override;
-#endif
+#endif //TOOLS_ENABLED
+
+#ifdef DEBUG_ENABLED
+	virtual Rect2 _edit_get_rect() const override;
+	virtual bool _edit_use_rect() const override;
+#endif // DEBUG_ENABLED
+
 	virtual void reparent(Node *p_parent, bool p_keep_global_transform = true) override;
 
 	// Editor integration.
@@ -414,7 +423,7 @@ public:
 	PackedStringArray get_configuration_warnings() const override;
 #ifdef TOOLS_ENABLED
 	virtual void get_argument_options(const StringName &p_function, int p_idx, List<String> *r_options) const override;
-#endif
+#endif //TOOLS_ENABLED
 
 	virtual bool is_text_field() const;
 
@@ -601,7 +610,7 @@ public:
 	Variant get_theme_item(Theme::DataType p_data_type, const StringName &p_name, const StringName &p_theme_type = StringName()) const;
 #ifdef TOOLS_ENABLED
 	Ref<Texture2D> get_editor_theme_icon(const StringName &p_name) const;
-#endif
+#endif //TOOLS_ENABLED
 
 	bool has_theme_icon_override(const StringName &p_name) const;
 	bool has_theme_stylebox_override(const StringName &p_name) const;
@@ -633,7 +642,10 @@ public:
 #ifndef DISABLE_DEPRECATED
 	void set_auto_translate(bool p_enable);
 	bool is_auto_translating() const;
-#endif
+#endif //DISABLE_DEPRECATED
+
+	void set_tooltip_auto_translate_mode(AutoTranslateMode p_mode);
+	AutoTranslateMode get_tooltip_auto_translate_mode() const;
 
 	// Extra properties.
 

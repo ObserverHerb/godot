@@ -263,7 +263,7 @@ bool FileSystemDock::_create_tree(TreeItem *p_parent, EditorFileSystemDirectory 
 	}
 
 	// Create items for all subdirectories.
-	bool reversed = file_sort == FILE_SORT_NAME_REVERSE;
+	bool reversed = file_sort == FileSortOption::FILE_SORT_NAME_REVERSE;
 	for (int i = reversed ? p_dir->get_subdir_count() - 1 : 0;
 			reversed ? i >= 0 : i < p_dir->get_subdir_count();
 			reversed ? i-- : i++) {
@@ -294,28 +294,28 @@ bool FileSystemDock::_create_tree(TreeItem *p_parent, EditorFileSystemDirectory 
 				}
 			}
 
-			FileInfo fi;
-			fi.name = p_dir->get_file(i);
-			fi.type = p_dir->get_file_type(i);
-			fi.icon_path = p_dir->get_file_icon_path(i);
-			fi.import_broken = !p_dir->get_file_import_is_valid(i);
-			fi.modified_time = p_dir->get_file_modified_time(i);
+			FileInfo file_info;
+			file_info.name = p_dir->get_file(i);
+			file_info.type = p_dir->get_file_type(i);
+			file_info.icon_path = p_dir->get_file_icon_path(i);
+			file_info.import_broken = !p_dir->get_file_import_is_valid(i);
+			file_info.modified_time = p_dir->get_file_modified_time(i);
 
-			file_list.push_back(fi);
+			file_list.push_back(file_info);
 		}
 
 		// Sort the file list if needed.
-		_sort_file_info_list(file_list);
+		sort_file_info_list(file_list, file_sort);
 
 		// Build the tree.
 		const int icon_size = get_theme_constant(SNAME("class_icon_size"), EditorStringName(Editor));
 
-		for (const FileInfo &fi : file_list) {
+		for (const FileInfo &file_info : file_list) {
 			TreeItem *file_item = tree->create_item(subdirectory_item);
-			const String file_metadata = lpath.path_join(fi.name);
-			file_item->set_text(0, fi.name);
+			const String file_metadata = lpath.path_join(file_info.name);
+			file_item->set_text(0, file_info.name);
 			file_item->set_structured_text_bidi_override(0, TextServer::STRUCTURED_TEXT_FILE);
-			file_item->set_icon(0, _get_tree_item_icon(!fi.import_broken, fi.type, fi.icon_path));
+			file_item->set_icon(0, _get_tree_item_icon(!file_info.import_broken, file_info.type, file_info.icon_path));
 			if (da->is_link(file_metadata)) {
 				file_item->set_icon_overlay(0, get_editor_theme_icon(SNAME("LinkOverlay")));
 				file_item->set_tooltip_text(0, vformat(TTR("Link to: %s"), da->read_link(file_metadata)));
@@ -495,7 +495,7 @@ void FileSystemDock::_update_display_mode(bool p_force) {
 	if (p_force || old_display_mode != display_mode) {
 		switch (display_mode) {
 			case DISPLAY_MODE_TREE_ONLY:
-				button_toggle_display_mode->set_icon(get_editor_theme_icon(SNAME("Panels1")));
+				button_toggle_display_mode->set_button_icon(get_editor_theme_icon(SNAME("Panels1")));
 				tree->show();
 				tree->set_v_size_flags(SIZE_EXPAND_FILL);
 				toolbar2_hbc->show();
@@ -512,7 +512,7 @@ void FileSystemDock::_update_display_mode(bool p_force) {
 				const int actual_offset = is_vertical ? split_box_offset_v : split_box_offset_h;
 				split_box->set_split_offset(actual_offset);
 				const StringName icon = is_vertical ? SNAME("Panels2") : SNAME("Panels2Alt");
-				button_toggle_display_mode->set_icon(get_editor_theme_icon(icon));
+				button_toggle_display_mode->set_button_icon(get_editor_theme_icon(icon));
 
 				tree->show();
 				tree->set_v_size_flags(SIZE_EXPAND_FILL);
@@ -597,7 +597,7 @@ void FileSystemDock::_notification(int p_what) {
 		case NOTIFICATION_THEME_CHANGED: {
 			_update_display_mode(true);
 
-			button_reload->set_icon(get_editor_theme_icon(SNAME("Reload")));
+			button_reload->set_button_icon(get_editor_theme_icon(SNAME("Reload")));
 
 			StringName mode_icon = "Panels1";
 			if (display_mode == DISPLAY_MODE_VSPLIT) {
@@ -605,28 +605,28 @@ void FileSystemDock::_notification(int p_what) {
 			} else if (display_mode == DISPLAY_MODE_HSPLIT) {
 				mode_icon = "Panels2Alt";
 			}
-			button_toggle_display_mode->set_icon(get_editor_theme_icon(mode_icon));
+			button_toggle_display_mode->set_button_icon(get_editor_theme_icon(mode_icon));
 
 			if (file_list_display_mode == FILE_LIST_DISPLAY_LIST) {
-				button_file_list_display_mode->set_icon(get_editor_theme_icon(SNAME("FileThumbnail")));
+				button_file_list_display_mode->set_button_icon(get_editor_theme_icon(SNAME("FileThumbnail")));
 			} else {
-				button_file_list_display_mode->set_icon(get_editor_theme_icon(SNAME("FileList")));
+				button_file_list_display_mode->set_button_icon(get_editor_theme_icon(SNAME("FileList")));
 			}
 
 			tree_search_box->set_right_icon(get_editor_theme_icon(SNAME("Search")));
-			tree_button_sort->set_icon(get_editor_theme_icon(SNAME("Sort")));
+			tree_button_sort->set_button_icon(get_editor_theme_icon(SNAME("Sort")));
 
 			file_list_search_box->set_right_icon(get_editor_theme_icon(SNAME("Search")));
-			file_list_button_sort->set_icon(get_editor_theme_icon(SNAME("Sort")));
+			file_list_button_sort->set_button_icon(get_editor_theme_icon(SNAME("Sort")));
 
-			button_dock_placement->set_icon(get_editor_theme_icon(SNAME("GuiTabMenuHl")));
+			button_dock_placement->set_button_icon(get_editor_theme_icon(SNAME("GuiTabMenuHl")));
 
 			if (is_layout_rtl()) {
-				button_hist_next->set_icon(get_editor_theme_icon(SNAME("Back")));
-				button_hist_prev->set_icon(get_editor_theme_icon(SNAME("Forward")));
+				button_hist_next->set_button_icon(get_editor_theme_icon(SNAME("Back")));
+				button_hist_prev->set_button_icon(get_editor_theme_icon(SNAME("Forward")));
 			} else {
-				button_hist_next->set_icon(get_editor_theme_icon(SNAME("Forward")));
-				button_hist_prev->set_icon(get_editor_theme_icon(SNAME("Back")));
+				button_hist_next->set_button_icon(get_editor_theme_icon(SNAME("Forward")));
+				button_hist_prev->set_button_icon(get_editor_theme_icon(SNAME("Back")));
 			}
 
 			overwrite_dialog_scroll->add_theme_style_override(SceneStringName(panel), get_theme_stylebox(SceneStringName(panel), "Tree"));
@@ -818,11 +818,11 @@ void FileSystemDock::_toggle_file_display() {
 void FileSystemDock::_set_file_display(bool p_active) {
 	if (p_active) {
 		file_list_display_mode = FILE_LIST_DISPLAY_LIST;
-		button_file_list_display_mode->set_icon(get_editor_theme_icon(SNAME("FileThumbnail")));
+		button_file_list_display_mode->set_button_icon(get_editor_theme_icon(SNAME("FileThumbnail")));
 		button_file_list_display_mode->set_tooltip_text(TTR("View items as a grid of thumbnails."));
 	} else {
 		file_list_display_mode = FILE_LIST_DISPLAY_THUMBNAILS;
-		button_file_list_display_mode->set_icon(get_editor_theme_icon(SNAME("FileList")));
+		button_file_list_display_mode->set_button_icon(get_editor_theme_icon(SNAME("FileList")));
 		button_file_list_display_mode->set_tooltip_text(TTR("View items as a list."));
 	}
 
@@ -860,62 +860,23 @@ void FileSystemDock::_search(EditorFileSystemDirectory *p_path, List<FileInfo> *
 		String file = p_path->get_file(i);
 
 		if (_matches_all_search_tokens(file)) {
-			FileInfo fi;
-			fi.name = file;
-			fi.type = p_path->get_file_type(i);
-			fi.path = p_path->get_file_path(i);
-			fi.import_broken = !p_path->get_file_import_is_valid(i);
-			fi.modified_time = p_path->get_file_modified_time(i);
+			FileInfo file_info;
+			file_info.name = file;
+			file_info.type = p_path->get_file_type(i);
+			file_info.path = p_path->get_file_path(i);
+			file_info.import_broken = !p_path->get_file_import_is_valid(i);
+			file_info.modified_time = p_path->get_file_modified_time(i);
 
-			if (_is_file_type_disabled_by_feature_profile(fi.type)) {
+			if (_is_file_type_disabled_by_feature_profile(file_info.type)) {
 				// This type is disabled, will not appear here.
 				continue;
 			}
 
-			matches->push_back(fi);
+			matches->push_back(file_info);
 			if (matches->size() > p_max_items) {
 				return;
 			}
 		}
-	}
-}
-
-struct FileSystemDock::FileInfoTypeComparator {
-	bool operator()(const FileInfo &p_a, const FileInfo &p_b) const {
-		return FileNoCaseComparator()(p_a.name.get_extension() + p_a.type + p_a.name.get_basename(), p_b.name.get_extension() + p_b.type + p_b.name.get_basename());
-	}
-};
-
-struct FileSystemDock::FileInfoModifiedTimeComparator {
-	bool operator()(const FileInfo &p_a, const FileInfo &p_b) const {
-		return p_a.modified_time > p_b.modified_time;
-	}
-};
-
-void FileSystemDock::_sort_file_info_list(List<FileSystemDock::FileInfo> &r_file_list) {
-	// Sort the file list if needed.
-	switch (file_sort) {
-		case FILE_SORT_TYPE:
-			r_file_list.sort_custom<FileInfoTypeComparator>();
-			break;
-		case FILE_SORT_TYPE_REVERSE:
-			r_file_list.sort_custom<FileInfoTypeComparator>();
-			r_file_list.reverse();
-			break;
-		case FILE_SORT_MODIFIED_TIME:
-			r_file_list.sort_custom<FileInfoModifiedTimeComparator>();
-			break;
-		case FILE_SORT_MODIFIED_TIME_REVERSE:
-			r_file_list.sort_custom<FileInfoModifiedTimeComparator>();
-			r_file_list.reverse();
-			break;
-		case FILE_SORT_NAME_REVERSE:
-			r_file_list.sort();
-			r_file_list.reverse();
-			break;
-		default: // FILE_SORT_NAME
-			r_file_list.sort();
-			break;
 	}
 }
 
@@ -1005,22 +966,22 @@ void FileSystemDock::_update_file_list(bool p_keep_selection) {
 				int index;
 				EditorFileSystemDirectory *efd = EditorFileSystem::get_singleton()->find_file(favorite, &index);
 
-				FileInfo fi;
-				fi.name = favorite.get_file();
-				fi.path = favorite;
+				FileInfo file_info;
+				file_info.name = favorite.get_file();
+				file_info.path = favorite;
 				if (efd) {
-					fi.type = efd->get_file_type(index);
-					fi.icon_path = efd->get_file_icon_path(index);
-					fi.import_broken = !efd->get_file_import_is_valid(index);
-					fi.modified_time = efd->get_file_modified_time(index);
+					file_info.type = efd->get_file_type(index);
+					file_info.icon_path = efd->get_file_icon_path(index);
+					file_info.import_broken = !efd->get_file_import_is_valid(index);
+					file_info.modified_time = efd->get_file_modified_time(index);
 				} else {
-					fi.type = "";
-					fi.import_broken = true;
-					fi.modified_time = 0;
+					file_info.type = "";
+					file_info.import_broken = true;
+					file_info.modified_time = 0;
 				}
 
-				if (searched_tokens.is_empty() || _matches_all_search_tokens(fi.name)) {
-					file_list.push_back(fi);
+				if (searched_tokens.is_empty() || _matches_all_search_tokens(file_info.name)) {
+					file_list.push_back(file_info);
 				}
 			}
 		}
@@ -1077,7 +1038,7 @@ void FileSystemDock::_update_file_list(bool p_keep_selection) {
 					files->set_item_icon_modulate(-1, editor_is_dark_theme ? inherited_folder_color : inherited_folder_color * ITEM_COLOR_SCALE);
 				}
 
-				bool reversed = file_sort == FILE_SORT_NAME_REVERSE;
+				bool reversed = file_sort == FileSortOption::FILE_SORT_NAME_REVERSE;
 				for (int i = reversed ? efd->get_subdir_count() - 1 : 0;
 						reversed ? i >= 0 : i < efd->get_subdir_count();
 						reversed ? i-- : i++) {
@@ -1099,21 +1060,21 @@ void FileSystemDock::_update_file_list(bool p_keep_selection) {
 
 			// Display the folder content.
 			for (int i = 0; i < efd->get_file_count(); i++) {
-				FileInfo fi;
-				fi.name = efd->get_file(i);
-				fi.path = directory.path_join(fi.name);
-				fi.type = efd->get_file_type(i);
-				fi.icon_path = efd->get_file_icon_path(i);
-				fi.import_broken = !efd->get_file_import_is_valid(i);
-				fi.modified_time = efd->get_file_modified_time(i);
+				FileInfo file_info;
+				file_info.name = efd->get_file(i);
+				file_info.path = directory.path_join(file_info.name);
+				file_info.type = efd->get_file_type(i);
+				file_info.icon_path = efd->get_file_icon_path(i);
+				file_info.import_broken = !efd->get_file_import_is_valid(i);
+				file_info.modified_time = efd->get_file_modified_time(i);
 
-				file_list.push_back(fi);
+				file_list.push_back(file_info);
 			}
 		}
 	}
 
 	// Sort the file list if needed.
-	_sort_file_info_list(file_list);
+	sort_file_info_list(file_list, file_sort);
 
 	// Fills the ItemList control node from the FileInfos.
 	String main_scene = GLOBAL_GET("application/run/main_scene");
@@ -1485,6 +1446,13 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 			}
 		}
 
+		if (p_item.is_file && FileAccess::exists(old_path + ".uid")) {
+			err = da->rename(old_path + ".uid", new_path + ".uid");
+			if (err != OK) {
+				EditorNode::get_singleton()->add_io_error(TTR("Error moving:") + "\n" + old_path + ".uid\n");
+			}
+		}
+
 		// Update scene if it is open.
 		for (int i = 0; i < file_changed_paths.size(); ++i) {
 			String new_item_path = p_item.is_file ? new_path : file_changed_paths[i].replace_first(old_path, new_path);
@@ -1530,76 +1498,22 @@ void FileSystemDock::_try_duplicate_item(const FileOrFolder &p_item, const Strin
 		EditorNode::get_singleton()->add_io_error(TTR("Cannot move a folder into itself.") + "\n" + old_path + "\n");
 		return;
 	}
-	Ref<DirAccess> da = DirAccess::create(DirAccess::ACCESS_RESOURCES);
 
 	if (p_item.is_file) {
 		print_verbose("Duplicating " + old_path + " -> " + new_path);
 
 		// Create the directory structure.
-		da->make_dir_recursive(new_path.get_base_dir());
+		EditorFileSystem::get_singleton()->make_dir_recursive(p_new_path.get_base_dir());
 
-		if (FileAccess::exists(old_path + ".import")) {
-			Error err = da->copy(old_path, new_path);
-			if (err != OK) {
-				EditorNode::get_singleton()->add_io_error(TTR("Error duplicating:") + "\n" + old_path + ": " + error_names[err] + "\n");
-				return;
-			}
-
-			// Remove uid from .import file to avoid conflict.
-			Ref<ConfigFile> cfg;
-			cfg.instantiate();
-			cfg->load(old_path + ".import");
-			cfg->erase_section_key("remap", "uid");
-			err = cfg->save(new_path + ".import");
-			if (err != OK) {
-				EditorNode::get_singleton()->add_io_error(TTR("Error duplicating:") + "\n" + old_path + ".import: " + error_names[err] + "\n");
-				return;
-			}
-		} else {
-			// Files which do not use an uid can just be copied.
-			if (ResourceLoader::get_resource_uid(old_path) == ResourceUID::INVALID_ID) {
-				Error err = da->copy(old_path, new_path);
-				if (err != OK) {
-					EditorNode::get_singleton()->add_io_error(TTR("Error duplicating:") + "\n" + old_path + ": " + error_names[err] + "\n");
-				}
-				return;
-			}
-
-			// Load the resource and save it again in the new location (this generates a new UID).
-			Error err;
-			Ref<Resource> res = ResourceLoader::load(old_path, "", ResourceFormatLoader::CACHE_MODE_REUSE, &err);
-			if (err == OK && res.is_valid()) {
-				err = ResourceSaver::save(res, new_path, ResourceSaver::FLAG_COMPRESS);
-				if (err != OK) {
-					EditorNode::get_singleton()->add_io_error(TTR("Error duplicating:") + " " + vformat(TTR("Failed to save resource at %s: %s"), new_path, error_names[err]));
-				}
-			} else if (err != OK) {
-				// When loading files like text files the error is OK but the resource is still null.
-				// We can ignore such files.
-				EditorNode::get_singleton()->add_io_error(TTR("Error duplicating:") + " " + vformat(TTR("Failed to load resource at %s: %s"), new_path, error_names[err]));
-			}
+		Error err = EditorFileSystem::get_singleton()->copy_file(old_path, new_path);
+		if (err != OK) {
+			EditorNode::get_singleton()->add_io_error(TTR("Error duplicating:") + "\n" + old_path + ": " + error_names[err] + "\n");
 		}
 	} else {
-		da->make_dir(new_path);
-
-		// Recursively duplicate all files inside the folder.
-		Ref<DirAccess> old_dir = DirAccess::open(old_path);
-		ERR_FAIL_COND(old_dir.is_null());
-
-		Ref<FileAccess> file_access = FileAccess::create(FileAccess::ACCESS_RESOURCES);
-		old_dir->set_include_navigational(false);
-		old_dir->list_dir_begin();
-		for (String f = old_dir->_get_next(); !f.is_empty(); f = old_dir->_get_next()) {
-			if (f.get_extension() == "import") {
-				continue;
-			}
-			if (file_access->file_exists(old_path + f)) {
-				_try_duplicate_item(FileOrFolder(old_path + f, true), new_path + f);
-			} else if (da->dir_exists(old_path + f)) {
-				_try_duplicate_item(FileOrFolder(old_path + f, false), new_path + f);
-			}
+		Error err = EditorFileSystem::get_singleton()->copy_directory(old_path, new_path);
+		if (err != OK) {
+			EditorNode::get_singleton()->add_io_error(TTR("Error duplicating directory:") + "\n" + old_path + "\n");
 		}
-		old_dir->list_dir_end();
 	}
 }
 
@@ -1734,21 +1648,27 @@ String FileSystemDock::_get_unique_name(const FileOrFolder &p_entry, const Strin
 	return new_path;
 }
 
-void FileSystemDock::_update_favorites_list_after_move(const HashMap<String, String> &p_files_renames, const HashMap<String, String> &p_folders_renames) const {
-	Vector<String> favorites_list = EditorSettings::get_singleton()->get_favorites();
-	Vector<String> new_favorites;
-
-	for (const String &old_path : favorites_list) {
+void FileSystemDock::_update_favorites_after_move(const HashMap<String, String> &p_files_renames, const HashMap<String, String> &p_folders_renames) const {
+	Vector<String> favorite_files = EditorSettings::get_singleton()->get_favorites();
+	Vector<String> new_favorite_files;
+	for (const String &old_path : favorite_files) {
 		if (p_folders_renames.has(old_path)) {
-			new_favorites.push_back(p_folders_renames[old_path]);
+			new_favorite_files.push_back(p_folders_renames[old_path]);
 		} else if (p_files_renames.has(old_path)) {
-			new_favorites.push_back(p_files_renames[old_path]);
+			new_favorite_files.push_back(p_files_renames[old_path]);
 		} else {
-			new_favorites.push_back(old_path);
+			new_favorite_files.push_back(old_path);
 		}
 	}
+	EditorSettings::get_singleton()->set_favorites(new_favorite_files);
 
-	EditorSettings::get_singleton()->set_favorites(new_favorites);
+	HashMap<String, PackedStringArray> favorite_properties = EditorSettings::get_singleton()->get_favorite_properties();
+	for (const KeyValue<String, String> &KV : p_files_renames) {
+		if (favorite_properties.has(KV.key)) {
+			favorite_properties.replace_key(KV.key, KV.value);
+		}
+	}
+	EditorSettings::get_singleton()->set_favorite_properties(favorite_properties);
 }
 
 void FileSystemDock::_make_scene_confirm() {
@@ -1891,7 +1811,7 @@ void FileSystemDock::_rename_operation_confirm() {
 	_update_resource_paths_after_move(file_renames, uids);
 	_update_dependencies_after_move(file_renames, file_owners);
 	_update_project_settings_after_move(file_renames, folder_renames);
-	_update_favorites_list_after_move(file_renames, folder_renames);
+	_update_favorites_after_move(file_renames, folder_renames);
 
 	EditorSceneTabs::get_singleton()->set_current_tab(current_tab);
 
@@ -1904,39 +1824,16 @@ void FileSystemDock::_rename_operation_confirm() {
 	_rescan();
 }
 
-void FileSystemDock::_duplicate_operation_confirm() {
-	String new_name = duplicate_dialog_text->get_text().strip_edges();
-	if (new_name.length() == 0) {
-		EditorNode::get_singleton()->show_warning(TTR("No name provided."));
-		return;
-	} else if (new_name.contains("/") || new_name.contains("\\") || new_name.contains(":")) {
-		EditorNode::get_singleton()->show_warning(TTR("Name contains invalid characters."));
-		return;
-	} else if (new_name[0] == '.') {
-		EditorNode::get_singleton()->show_warning(TTR("Name begins with a dot."));
-		return;
+void FileSystemDock::_duplicate_operation_confirm(const String &p_path) {
+	const String base_dir = p_path.trim_suffix("/").get_base_dir();
+	if (!DirAccess::dir_exists_absolute(base_dir)) {
+		Error err = EditorFileSystem::get_singleton()->make_dir_recursive(base_dir);
+		if (err != OK) {
+			EditorNode::get_singleton()->show_warning(vformat(TTR("Could not create base directory: %s"), error_names[err]));
+			return;
+		}
 	}
-
-	String base_dir = to_duplicate.path.get_base_dir();
-	// get_base_dir() returns "some/path" if the original path was "some/path/", so work it around.
-	if (to_duplicate.path.ends_with("/")) {
-		base_dir = base_dir.get_base_dir();
-	}
-
-	String new_path = base_dir.path_join(new_name);
-
-	// Present a more user friendly warning for name conflict
-	Ref<DirAccess> da = DirAccess::create(DirAccess::ACCESS_RESOURCES);
-	if (da->file_exists(new_path) || da->dir_exists(new_path)) {
-		EditorNode::get_singleton()->show_warning(TTR("A file or folder with this name already exists."));
-		return;
-	}
-
-	_try_duplicate_item(to_duplicate, new_path);
-
-	// Rescan everything.
-	print_verbose("FileSystem: calling rescan.");
-	_rescan();
+	_try_duplicate_item(to_duplicate, p_path);
 }
 
 void FileSystemDock::_overwrite_dialog_action(bool p_overwrite) {
@@ -2075,7 +1972,7 @@ void FileSystemDock::_move_operation_confirm(const String &p_to_path, bool p_cop
 			_update_resource_paths_after_move(file_renames, uids);
 			_update_dependencies_after_move(file_renames, file_owners);
 			_update_project_settings_after_move(file_renames, folder_renames);
-			_update_favorites_list_after_move(file_renames, folder_renames);
+			_update_favorites_after_move(file_renames, folder_renames);
 
 			EditorSceneTabs::get_singleton()->set_current_tab(current_tab);
 
@@ -2570,27 +2467,22 @@ void FileSystemDock::_file_option(int p_option, const Vector<String> &p_selected
 		} break;
 
 		case FILE_DUPLICATE: {
-			// Duplicate the selected files.
-			for (int i = 0; i < p_selected.size(); i++) {
-				to_duplicate.path = p_selected[i];
-				to_duplicate.is_file = !to_duplicate.path.ends_with("/");
-				if (to_duplicate.is_file) {
-					String name = to_duplicate.path.get_file();
-					duplicate_dialog->set_title(TTR("Duplicating file:") + " " + name);
-					duplicate_dialog_text->set_text(name);
-					duplicate_dialog_text->select(0, name.rfind("."));
-				} else {
-					String name = to_duplicate.path.substr(0, to_duplicate.path.length() - 1).get_file();
-					duplicate_dialog->set_title(TTR("Duplicating folder:") + " " + name);
-					duplicate_dialog_text->set_text(name);
-					duplicate_dialog_text->select(0, name.length());
-				}
-				duplicate_dialog->popup_centered(Size2(250, 80) * EDSCALE);
-				duplicate_dialog_text->grab_focus();
+			if (p_selected.size() != 1) {
+				return;
 			}
-		} break;
 
-		case FILE_INFO: {
+			to_duplicate.path = p_selected[0];
+			to_duplicate.is_file = !to_duplicate.path.ends_with("/");
+			if (to_duplicate.is_file) {
+				String name = to_duplicate.path.get_file();
+				make_dir_dialog->config(to_duplicate.path.get_base_dir(), callable_mp(this, &FileSystemDock::_duplicate_operation_confirm),
+						DirectoryCreateDialog::MODE_FILE, TTR("Duplicating file:") + " " + name, name);
+			} else {
+				String name = to_duplicate.path.trim_suffix("/").get_file();
+				make_dir_dialog->config(to_duplicate.path.trim_suffix("/").get_base_dir(), callable_mp(this, &FileSystemDock::_duplicate_operation_confirm),
+						DirectoryCreateDialog::MODE_DIRECTORY, TTR("Duplicating folder:") + " " + name, name);
+			}
+			make_dir_dialog->popup_centered();
 		} break;
 
 		case FILE_REIMPORT: {
@@ -2602,7 +2494,8 @@ void FileSystemDock::_file_option(int p_option, const Vector<String> &p_selected
 			if (!directory.ends_with("/")) {
 				directory = directory.get_base_dir();
 			}
-			make_dir_dialog->config(directory);
+			make_dir_dialog->config(directory, callable_mp(this, &FileSystemDock::create_directory).bind(directory),
+					DirectoryCreateDialog::MODE_DIRECTORY, TTR("Create Folder"), "new folder");
 			make_dir_dialog->popup_centered();
 		} break;
 
@@ -2829,6 +2722,13 @@ void FileSystemDock::focus_on_filter() {
 	if (current_search_box) {
 		current_search_box->grab_focus();
 		current_search_box->select_all();
+	}
+}
+
+void FileSystemDock::create_directory(const String &p_path, const String &p_base_dir) {
+	Error err = EditorFileSystem::get_singleton()->make_dir_recursive(p_path.trim_prefix(p_base_dir), p_base_dir);
+	if (err != OK) {
+		EditorNode::get_singleton()->show_warning(vformat(TTR("Could not create folder: %s"), error_names[err]));
 	}
 }
 
@@ -3481,7 +3381,7 @@ void FileSystemDock::_file_and_folders_fill_popup(PopupMenu *p_popup, const Vect
 		const bool is_directory = fpath.ends_with("/");
 
 		p_popup->add_icon_shortcut(get_editor_theme_icon(SNAME("Terminal")), ED_GET_SHORTCUT("filesystem_dock/open_in_terminal"), FILE_OPEN_IN_TERMINAL);
-		p_popup->set_item_text(p_popup->get_item_index(FILE_OPEN_IN_TERMINAL), is_directory ? TTR("Open in Terminal") : TTR("Open Containing Folder in Terminal"));
+		p_popup->set_item_text(p_popup->get_item_index(FILE_OPEN_IN_TERMINAL), is_directory ? TTR("Open in Terminal") : TTR("Open Folder in Terminal"));
 
 		if (!is_directory) {
 			p_popup->add_icon_shortcut(get_editor_theme_icon(SNAME("ExternalLink")), ED_GET_SHORTCUT("filesystem_dock/open_in_external_program"), FILE_OPEN_EXTERNAL);
@@ -3935,7 +3835,7 @@ void FileSystemDock::_project_settings_changed() {
 }
 
 void FileSystemDock::set_file_sort(FileSortOption p_file_sort) {
-	for (int i = 0; i != FILE_SORT_MAX; i++) {
+	for (int i = 0; i != (int)FileSortOption::FILE_SORT_MAX; i++) {
 		tree_button_sort->get_popup()->set_item_checked(i, (i == (int)p_file_sort));
 		file_list_button_sort->get_popup()->set_item_checked(i, (i == (int)p_file_sort));
 	}
@@ -3965,13 +3865,13 @@ MenuButton *FileSystemDock::_create_file_menu_button() {
 
 	PopupMenu *p = button->get_popup();
 	p->connect(SceneStringName(id_pressed), callable_mp(this, &FileSystemDock::_file_sort_popup));
-	p->add_radio_check_item(TTR("Sort by Name (Ascending)"), FILE_SORT_NAME);
-	p->add_radio_check_item(TTR("Sort by Name (Descending)"), FILE_SORT_NAME_REVERSE);
-	p->add_radio_check_item(TTR("Sort by Type (Ascending)"), FILE_SORT_TYPE);
-	p->add_radio_check_item(TTR("Sort by Type (Descending)"), FILE_SORT_TYPE_REVERSE);
-	p->add_radio_check_item(TTR("Sort by Last Modified"), FILE_SORT_MODIFIED_TIME);
-	p->add_radio_check_item(TTR("Sort by First Modified"), FILE_SORT_MODIFIED_TIME_REVERSE);
-	p->set_item_checked(file_sort, true);
+	p->add_radio_check_item(TTR("Sort by Name (Ascending)"), (int)FileSortOption::FILE_SORT_NAME);
+	p->add_radio_check_item(TTR("Sort by Name (Descending)"), (int)FileSortOption::FILE_SORT_NAME_REVERSE);
+	p->add_radio_check_item(TTR("Sort by Type (Ascending)"), (int)FileSortOption::FILE_SORT_TYPE);
+	p->add_radio_check_item(TTR("Sort by Type (Descending)"), (int)FileSortOption::FILE_SORT_TYPE_REVERSE);
+	p->add_radio_check_item(TTR("Sort by Last Modified"), (int)FileSortOption::FILE_SORT_MODIFIED_TIME);
+	p->add_radio_check_item(TTR("Sort by First Modified"), (int)FileSortOption::FILE_SORT_MODIFIED_TIME_REVERSE);
+	p->set_item_checked((int)file_sort, true);
 	return button;
 }
 
@@ -4041,7 +3941,7 @@ void FileSystemDock::save_layout_to_config(Ref<ConfigFile> p_layout, const Strin
 	p_layout->set_value(p_section, "dock_filesystem_h_split_offset", get_h_split_offset());
 	p_layout->set_value(p_section, "dock_filesystem_v_split_offset", get_v_split_offset());
 	p_layout->set_value(p_section, "dock_filesystem_display_mode", get_display_mode());
-	p_layout->set_value(p_section, "dock_filesystem_file_sort", get_file_sort());
+	p_layout->set_value(p_section, "dock_filesystem_file_sort", (int)get_file_sort());
 	p_layout->set_value(p_section, "dock_filesystem_file_list_display_mode", get_file_list_display_mode());
 	PackedStringArray selected_files = get_selected_paths();
 	p_layout->set_value(p_section, "dock_filesystem_selected_paths", selected_files);
@@ -4110,17 +4010,17 @@ FileSystemDock::FileSystemDock() {
 
 	// `KeyModifierMask::CMD_OR_CTRL | Key::C` conflicts with other editor shortcuts.
 	ED_SHORTCUT("filesystem_dock/copy_path", TTR("Copy Path"), KeyModifierMask::CMD_OR_CTRL | KeyModifierMask::SHIFT | Key::C);
-	ED_SHORTCUT("filesystem_dock/copy_absolute_path", TTR("Copy Absolute Path"));
-	ED_SHORTCUT("filesystem_dock/copy_uid", TTR("Copy UID"));
+	ED_SHORTCUT("filesystem_dock/copy_absolute_path", TTR("Copy Absolute Path"), KeyModifierMask::CMD_OR_CTRL | KeyModifierMask::ALT | Key::C);
+	ED_SHORTCUT("filesystem_dock/copy_uid", TTR("Copy UID"), KeyModifierMask::CMD_OR_CTRL | KeyModifierMask::ALT | KeyModifierMask::SHIFT | Key::C);
 	ED_SHORTCUT("filesystem_dock/duplicate", TTR("Duplicate..."), KeyModifierMask::CMD_OR_CTRL | Key::D);
 	ED_SHORTCUT("filesystem_dock/delete", TTR("Delete"), Key::KEY_DELETE);
 	ED_SHORTCUT("filesystem_dock/rename", TTR("Rename..."), Key::F2);
 	ED_SHORTCUT_OVERRIDE("filesystem_dock/rename", "macos", Key::ENTER);
 #if !defined(ANDROID_ENABLED) && !defined(WEB_ENABLED)
 	// Opening the system file manager or opening in an external program is not supported on the Android and web editors.
-	ED_SHORTCUT("filesystem_dock/show_in_explorer", TTR("Open in File Manager"));
-	ED_SHORTCUT("filesystem_dock/open_in_external_program", TTR("Open in External Program"));
-	ED_SHORTCUT("filesystem_dock/open_in_terminal", TTR("Open in Terminal"));
+	ED_SHORTCUT("filesystem_dock/show_in_explorer", TTR("Open in File Manager"), KeyModifierMask::CMD_OR_CTRL | KeyModifierMask::ALT | Key::R);
+	ED_SHORTCUT("filesystem_dock/open_in_external_program", TTR("Open in External Program"), KeyModifierMask::CMD_OR_CTRL | KeyModifierMask::ALT | Key::E);
+	ED_SHORTCUT("filesystem_dock/open_in_terminal", TTR("Open in Terminal"), KeyModifierMask::CMD_OR_CTRL | KeyModifierMask::ALT | Key::T);
 #endif
 
 	// Properly translating color names would require a separate HashMap, so for simplicity they are provided as comments.
@@ -4142,22 +4042,25 @@ FileSystemDock::FileSystemDock() {
 	add_child(top_vbc);
 
 	HBoxContainer *toolbar_hbc = memnew(HBoxContainer);
-	toolbar_hbc->add_theme_constant_override("separation", 0);
 	top_vbc->add_child(toolbar_hbc);
+
+	HBoxContainer *nav_hbc = memnew(HBoxContainer);
+	nav_hbc->add_theme_constant_override("separation", 0);
+	toolbar_hbc->add_child(nav_hbc);
 
 	button_hist_prev = memnew(Button);
 	button_hist_prev->set_flat(true);
 	button_hist_prev->set_disabled(true);
 	button_hist_prev->set_focus_mode(FOCUS_NONE);
 	button_hist_prev->set_tooltip_text(TTR("Go to previous selected folder/file."));
-	toolbar_hbc->add_child(button_hist_prev);
+	nav_hbc->add_child(button_hist_prev);
 
 	button_hist_next = memnew(Button);
 	button_hist_next->set_flat(true);
 	button_hist_next->set_disabled(true);
 	button_hist_next->set_focus_mode(FOCUS_NONE);
 	button_hist_next->set_tooltip_text(TTR("Go to next selected folder/file."));
-	toolbar_hbc->add_child(button_hist_next);
+	nav_hbc->add_child(button_hist_next);
 
 	current_path_line_edit = memnew(LineEdit);
 	current_path_line_edit->set_structured_text_bidi_override(TextServer::STRUCTURED_TEXT_FILE);
@@ -4180,13 +4083,12 @@ FileSystemDock::FileSystemDock() {
 	toolbar_hbc->add_child(button_toggle_display_mode);
 
 	button_dock_placement = memnew(Button);
-	button_dock_placement->set_flat(true);
+	button_dock_placement->set_theme_type_variation("FlatMenuButton");
 	button_dock_placement->connect(SceneStringName(pressed), callable_mp(this, &FileSystemDock::_change_bottom_dock_placement));
 	button_dock_placement->hide();
 	toolbar_hbc->add_child(button_dock_placement);
 
 	toolbar2_hbc = memnew(HBoxContainer);
-	toolbar2_hbc->add_theme_constant_override("separation", 0);
 	top_vbc->add_child(toolbar2_hbc);
 
 	tree_search_box = memnew(LineEdit);
@@ -4252,7 +4154,7 @@ FileSystemDock::FileSystemDock() {
 	path_hb->add_child(file_list_button_sort);
 
 	button_file_list_display_mode = memnew(Button);
-	button_file_list_display_mode->set_flat(true);
+	button_file_list_display_mode->set_theme_type_variation("FlatMenuButton");
 	path_hb->add_child(button_file_list_display_mode);
 
 	files = memnew(FileSystemList);
@@ -4318,17 +4220,6 @@ FileSystemDock::FileSystemDock() {
 
 	overwrite_dialog_footer = memnew(Label);
 	overwrite_dialog_vb->add_child(overwrite_dialog_footer);
-
-	duplicate_dialog = memnew(ConfirmationDialog);
-	VBoxContainer *duplicate_dialog_vb = memnew(VBoxContainer);
-	duplicate_dialog->add_child(duplicate_dialog_vb);
-
-	duplicate_dialog_text = memnew(LineEdit);
-	duplicate_dialog_vb->add_margin_child(TTR("Name:"), duplicate_dialog_text);
-	duplicate_dialog->set_ok_button_text(TTR("Duplicate"));
-	add_child(duplicate_dialog);
-	duplicate_dialog->register_text_enter(duplicate_dialog_text);
-	duplicate_dialog->connect(SceneStringName(confirmed), callable_mp(this, &FileSystemDock::_duplicate_operation_confirm));
 
 	make_dir_dialog = memnew(DirectoryCreateDialog);
 	add_child(make_dir_dialog);

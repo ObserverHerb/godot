@@ -38,6 +38,7 @@
 #include "scene/main/canvas_layer.h"
 #include "scene/main/window.h"
 #include "scene/resources/2d/rectangle_shape_2d.h"
+#include "servers/physics_server_2d_dummy.h"
 
 #include "tests/test_macros.h"
 
@@ -1550,6 +1551,12 @@ int TestArea2D::counter = 0;
 TEST_CASE("[SceneTree][Viewport] Physics Picking 2D") {
 	// FIXME: MOUSE_MODE_CAPTURED if-conditions are not testable, because DisplayServerMock doesn't support it.
 
+	// NOTE: This test requires a real physics server.
+	PhysicsServer2DDummy *physics_server_2d_dummy = Object::cast_to<PhysicsServer2DDummy>(PhysicsServer2D::get_singleton());
+	if (physics_server_2d_dummy) {
+		return;
+	}
+
 	struct PickingCollider {
 		TestArea2D *a;
 		CollisionShape2D *c;
@@ -1570,7 +1577,7 @@ TEST_CASE("[SceneTree][Viewport] Physics Picking 2D") {
 		PickingCollider pc;
 		pc.a = memnew(TestArea2D);
 		pc.c = memnew(CollisionShape2D);
-		pc.r = Ref<RectangleShape2D>(memnew(RectangleShape2D));
+		pc.r.instantiate();
 		pc.r->set_size(Size2(150, 150));
 		pc.c->set_shape(pc.r);
 		pc.a->add_child(pc.c);

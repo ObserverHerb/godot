@@ -512,6 +512,9 @@ void register_scene_types() {
 	GDREGISTER_CLASS(AnimationNodeStateMachine);
 	GDREGISTER_CLASS(AnimationNodeStateMachinePlayback);
 
+	GDREGISTER_INTERNAL_CLASS(AnimationNodeStartState);
+	GDREGISTER_INTERNAL_CLASS(AnimationNodeEndState);
+
 	GDREGISTER_CLASS(AnimationNodeSync);
 	GDREGISTER_CLASS(AnimationNodeStateMachineTransition);
 	GDREGISTER_CLASS(AnimationNodeOutput);
@@ -883,7 +886,6 @@ void register_scene_types() {
 	GDREGISTER_CLASS(ProceduralSkyMaterial);
 	GDREGISTER_CLASS(PanoramaSkyMaterial);
 	GDREGISTER_CLASS(PhysicalSkyMaterial);
-	SceneTree::add_idle_callback(BaseMaterial3D::flush_changes);
 	BaseMaterial3D::init_shaders();
 
 	GDREGISTER_CLASS(MeshLibrary);

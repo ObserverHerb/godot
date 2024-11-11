@@ -129,6 +129,7 @@ bool DisplayServerX11::has_feature(Feature p_feature) const {
 		case FEATURE_ICON:
 #ifdef DBUS_ENABLED
 		case FEATURE_NATIVE_DIALOG_FILE:
+		case FEATURE_NATIVE_DIALOG_FILE_EXTRA:
 #endif
 		//case FEATURE_NATIVE_DIALOG:
 		//case FEATURE_NATIVE_DIALOG_INPUT:
@@ -1861,6 +1862,18 @@ int64_t DisplayServerX11::window_get_native_handle(HandleType p_handle_type, Win
 			}
 			return 0;
 		}
+		case EGL_DISPLAY: {
+			if (gl_manager_egl) {
+				return (int64_t)gl_manager_egl->get_display(p_window);
+			}
+			return 0;
+		}
+		case EGL_CONFIG: {
+			if (gl_manager_egl) {
+				return (int64_t)gl_manager_egl->get_config(p_window);
+			}
+			return 0;
+		}
 #endif
 		default: {
 			return 0;
@@ -2055,7 +2068,7 @@ void DisplayServerX11::window_set_current_screen(int p_screen, WindowID p_window
 		return;
 	}
 
-	if (window_get_mode(p_window) == WINDOW_MODE_FULLSCREEN) {
+	if (window_get_mode(p_window) == WINDOW_MODE_FULLSCREEN || window_get_mode(p_window) == WINDOW_MODE_MAXIMIZED) {
 		Point2i position = screen_get_position(p_screen);
 		Size2i size = screen_get_size(p_screen);
 
@@ -2998,11 +3011,7 @@ bool DisplayServerX11::window_is_focused(WindowID p_window) const {
 
 	const WindowData &wd = windows[p_window];
 
-	Window focused_window;
-	int focus_ret_state;
-	XGetInputFocus(x11_display, &focused_window, &focus_ret_state);
-
-	return wd.x11_window == focused_window;
+	return wd.focused;
 }
 
 bool DisplayServerX11::window_can_draw(WindowID p_window) const {
@@ -3050,7 +3059,7 @@ void DisplayServerX11::window_set_ime_active(const bool p_active, WindowID p_win
 		XWindowAttributes xwa;
 		XSync(x11_display, False);
 		XGetWindowAttributes(x11_display, wd.x11_xim_window, &xwa);
-		if (xwa.map_state == IsViewable) {
+		if (xwa.map_state == IsViewable && _window_focus_check()) {
 			_set_input_focus(wd.x11_xim_window, RevertToParent);
 		}
 		XSetICFocus(wd.xic);
@@ -4319,7 +4328,7 @@ bool DisplayServerX11::_window_focus_check() {
 
 	bool has_focus = false;
 	for (const KeyValue<int, DisplayServerX11::WindowData> &wid : windows) {
-		if (wid.value.x11_window == focused_window) {
+		if (wid.value.x11_window == focused_window || (wid.value.xic && wid.value.ime_active && wid.value.x11_xim_window == focused_window)) {
 			has_focus = true;
 			break;
 		}
@@ -6160,13 +6169,16 @@ DisplayServerX11::DisplayServerX11(const String &p_rendering_driver, WindowMode 
 		if (rendering_context->initialize() != OK) {
 			memdelete(rendering_context);
 			rendering_context = nullptr;
+#if defined(GLES3_ENABLED)
 			bool fallback_to_opengl3 = GLOBAL_GET("rendering/rendering_device/fallback_to_opengl3");
 			if (fallback_to_opengl3 && rendering_driver != "opengl3") {
 				WARN_PRINT("Your video card drivers seem not to support the required Vulkan version, switching to OpenGL 3.");
 				rendering_driver = "opengl3";
 				OS::get_singleton()->set_current_rendering_method("gl_compatibility");
 				OS::get_singleton()->set_current_rendering_driver_name(rendering_driver);
-			} else {
+			} else
+#endif // GLES3_ENABLED
+			{
 				r_error = ERR_CANT_CREATE;
 
 				if (p_rendering_driver == "vulkan") {

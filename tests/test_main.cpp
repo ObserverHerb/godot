@@ -50,8 +50,11 @@
 #include "tests/core/io/test_json.h"
 #include "tests/core/io/test_json_native.h"
 #include "tests/core/io/test_marshalls.h"
+#include "tests/core/io/test_packet_peer.h"
 #include "tests/core/io/test_pck_packer.h"
 #include "tests/core/io/test_resource.h"
+#include "tests/core/io/test_stream_peer.h"
+#include "tests/core/io/test_stream_peer_buffer.h"
 #include "tests/core/io/test_xml_parser.h"
 #include "tests/core/math/test_aabb.h"
 #include "tests/core/math/test_astar.h"
@@ -79,10 +82,12 @@
 #include "tests/core/object/test_object.h"
 #include "tests/core/object/test_undo_redo.h"
 #include "tests/core/os/test_os.h"
+#include "tests/core/string/test_fuzzy_search.h"
 #include "tests/core/string/test_node_path.h"
 #include "tests/core/string/test_string.h"
 #include "tests/core/string/test_translation.h"
 #include "tests/core/string/test_translation_server.h"
+#include "tests/core/templates/test_a_hash_map.h"
 #include "tests/core/templates/test_command_queue.h"
 #include "tests/core/templates/test_hash_map.h"
 #include "tests/core/templates/test_hash_set.h"
@@ -122,6 +127,7 @@
 #include "tests/scene/test_parallax_2d.h"
 #include "tests/scene/test_path_2d.h"
 #include "tests/scene/test_path_follow_2d.h"
+#include "tests/scene/test_physics_material.h"
 #include "tests/scene/test_sprite_frames.h"
 #include "tests/scene/test_style_box_texture.h"
 #include "tests/scene/test_theme.h"
@@ -138,6 +144,8 @@
 #include "tests/scene/test_color_picker.h"
 #include "tests/scene/test_graph_node.h"
 #include "tests/scene/test_option_button.h"
+#include "tests/scene/test_tab_bar.h"
+#include "tests/scene/test_tab_container.h"
 #include "tests/scene/test_text_edit.h"
 #include "tests/scene/test_tree.h"
 #endif // ADVANCED_GUI_DISABLED
@@ -161,6 +169,7 @@
 #include "tests/scene/test_path_follow_3d.h"
 #include "tests/scene/test_primitives.h"
 #include "tests/scene/test_skeleton_3d.h"
+#include "tests/scene/test_sky.h"
 #endif // _3D_DISABLED
 
 #include "modules/modules_tests.gen.h"
@@ -174,8 +183,10 @@
 #include "servers/navigation_server_3d.h"
 #endif // _3D_DISABLED
 #include "servers/physics_server_2d.h"
+#include "servers/physics_server_2d_dummy.h"
 #ifndef _3D_DISABLED
 #include "servers/physics_server_3d.h"
+#include "servers/physics_server_3d_dummy.h"
 #endif // _3D_DISABLED
 #include "servers/rendering/rendering_server_default.h"
 
@@ -290,10 +301,16 @@ struct GodotTestCaseListener : public doctest::IReporter {
 
 #ifndef _3D_DISABLED
 			physics_server_3d = PhysicsServer3DManager::get_singleton()->new_default_server();
+			if (!physics_server_3d) {
+				physics_server_3d = memnew(PhysicsServer3DDummy);
+			}
 			physics_server_3d->init();
 #endif // _3D_DISABLED
 
 			physics_server_2d = PhysicsServer2DManager::get_singleton()->new_default_server();
+			if (!physics_server_2d) {
+				physics_server_2d = memnew(PhysicsServer2DDummy);
+			}
 			physics_server_2d->init();
 
 #ifndef _3D_DISABLED

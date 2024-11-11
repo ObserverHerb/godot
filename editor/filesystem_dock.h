@@ -33,6 +33,7 @@
 
 #include "editor/dependency_editor.h"
 #include "editor/editor_file_system.h"
+#include "editor/file_info.h"
 #include "editor/plugins/script_editor_plugin.h"
 #include "editor/script_create_dialog.h"
 #include "scene/gui/box_container.h"
@@ -93,16 +94,6 @@ public:
 		DISPLAY_MODE_HSPLIT,
 	};
 
-	enum FileSortOption {
-		FILE_SORT_NAME = 0,
-		FILE_SORT_NAME_REVERSE,
-		FILE_SORT_TYPE,
-		FILE_SORT_TYPE_REVERSE,
-		FILE_SORT_MODIFIED_TIME,
-		FILE_SORT_MODIFIED_TIME_REVERSE,
-		FILE_SORT_MAX,
-	};
-
 	enum Overwrite {
 		OVERWRITE_UNDECIDED,
 		OVERWRITE_REPLACE,
@@ -125,7 +116,6 @@ private:
 		FILE_REMOVE,
 		FILE_DUPLICATE,
 		FILE_REIMPORT,
-		FILE_INFO,
 		FILE_NEW,
 		FILE_SHOW_IN_EXPLORER,
 		FILE_OPEN_EXTERNAL,
@@ -146,7 +136,7 @@ private:
 	HashMap<String, Color> folder_colors;
 	Dictionary assigned_folder_colors;
 
-	FileSortOption file_sort = FILE_SORT_NAME;
+	FileSortOption file_sort = FileSortOption::FILE_SORT_NAME;
 
 	VBoxContainer *scanning_vb = nullptr;
 	ProgressBar *scanning_progress = nullptr;
@@ -192,8 +182,6 @@ private:
 	DependencyRemoveDialog *remove_dialog = nullptr;
 
 	EditorDirDialog *move_dialog = nullptr;
-	ConfirmationDialog *duplicate_dialog = nullptr;
-	LineEdit *duplicate_dialog_text = nullptr;
 	DirectoryCreateDialog *make_dir_dialog = nullptr;
 
 	ConfirmationDialog *overwrite_dialog = nullptr;
@@ -287,7 +275,7 @@ private:
 	void _before_move(HashMap<String, ResourceUID::ID> &r_uids, HashSet<String> &r_file_owners) const;
 	void _update_dependencies_after_move(const HashMap<String, String> &p_renames, const HashSet<String> &p_file_owners) const;
 	void _update_resource_paths_after_move(const HashMap<String, String> &p_renames, const HashMap<String, ResourceUID::ID> &p_uids) const;
-	void _update_favorites_list_after_move(const HashMap<String, String> &p_files_renames, const HashMap<String, String> &p_folders_renames) const;
+	void _update_favorites_after_move(const HashMap<String, String> &p_files_renames, const HashMap<String, String> &p_folders_renames) const;
 	void _update_project_settings_after_move(const HashMap<String, String> &p_renames, const HashMap<String, String> &p_folders_renames);
 	String _get_unique_name(const FileOrFolder &p_entry, const String &p_at_path);
 
@@ -300,7 +288,7 @@ private:
 	void _resource_created();
 	void _make_scene_confirm();
 	void _rename_operation_confirm();
-	void _duplicate_operation_confirm();
+	void _duplicate_operation_confirm(const String &p_path);
 	void _overwrite_dialog_action(bool p_overwrite);
 	void _convert_dialog_action();
 	Vector<String> _check_existing();
@@ -335,25 +323,6 @@ private:
 	void _file_list_empty_clicked(const Vector2 &p_pos, MouseButton p_mouse_button_index);
 	void _tree_empty_click(const Vector2 &p_pos, MouseButton p_button);
 	void _tree_empty_selected();
-
-	struct FileInfo {
-		String name;
-		String path;
-		String icon_path;
-		StringName type;
-		Vector<String> sources;
-		bool import_broken = false;
-		uint64_t modified_time = 0;
-
-		bool operator<(const FileInfo &fi) const {
-			return FileNoCaseComparator()(name, fi.name);
-		}
-	};
-
-	struct FileInfoTypeComparator;
-	struct FileInfoModifiedTimeComparator;
-
-	void _sort_file_info_list(List<FileSystemDock::FileInfo> &r_file_list);
 
 	void _search(EditorFileSystemDirectory *p_path, List<FileInfo> *matches, int p_max_items);
 
@@ -412,6 +381,7 @@ public:
 	void navigate_to_path(const String &p_path);
 	void focus_on_path();
 	void focus_on_filter();
+	void create_directory(const String &p_path, const String &p_base_dir);
 
 	ScriptCreateDialog *get_script_create_dialog() const;
 
@@ -431,7 +401,7 @@ public:
 	FileSortOption get_file_sort() const { return file_sort; }
 
 	void set_file_list_display_mode(FileListDisplayMode p_mode);
-	FileListDisplayMode get_file_list_display_mode() const { return file_list_display_mode; };
+	FileListDisplayMode get_file_list_display_mode() const { return file_list_display_mode; }
 
 	Tree *get_tree_control() { return tree; }
 
