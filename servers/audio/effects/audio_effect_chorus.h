@@ -59,6 +59,8 @@ class AudioEffectChorus : public AudioEffect {
 	friend class AudioEffectChorusInstance;
 
 public:
+	static constexpr float MS_CUTOFF_MAX_F = 16000.0f;
+
 	enum {
 		MAX_DELAY_MS = 50,
 		MAX_DEPTH_MS = 20,
@@ -67,7 +69,7 @@ public:
 		CYCLES_FRAC = 16,
 		CYCLES_MASK = (1 << CYCLES_FRAC) - 1,
 		MAX_CHANNELS = 4,
-		MS_CUTOFF_MAX = 16000
+		MS_CUTOFF_MAX = static_cast<int>(MS_CUTOFF_MAX_F)
 	};
 
 private:
