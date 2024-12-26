@@ -551,11 +551,15 @@ public:
 	double get_frames_per_second() const;
 	uint64_t get_physics_frames() const;
 	uint64_t get_process_frames() const;
+	double get_unscaled_delta() const;
 
 	int get_frames_drawn();
 
 	void set_time_scale(double p_scale);
 	double get_time_scale();
+
+	void set_physics_time_scale(double p_scale);
+	double get_physics_time_scale();
 
 	MainLoop *get_main_loop() const;
 

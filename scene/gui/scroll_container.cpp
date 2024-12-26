@@ -264,15 +264,15 @@ void ScrollContainer::_update_scrollbar_position() {
 	int lmar = is_layout_rtl() ? theme_cache.panel_style->get_margin(SIDE_RIGHT) : theme_cache.panel_style->get_margin(SIDE_LEFT);
 	int rmar = is_layout_rtl() ? theme_cache.panel_style->get_margin(SIDE_LEFT) : theme_cache.panel_style->get_margin(SIDE_RIGHT);
 
-	h_scroll->set_anchor_and_offset(SIDE_LEFT, ANCHOR_BEGIN, lmar);
-	h_scroll->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END, -rmar - vmin.width);
-	h_scroll->set_anchor_and_offset(SIDE_TOP, ANCHOR_END, -hmin.height - theme_cache.panel_style->get_margin(SIDE_BOTTOM));
-	h_scroll->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, -theme_cache.panel_style->get_margin(SIDE_BOTTOM));
+	h_scroll->set_anchor_and_offset(SIDE_LEFT, ANCHOR_BEGIN_F, lmar);
+	h_scroll->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END_F, -rmar - vmin.width);
+	h_scroll->set_anchor_and_offset(SIDE_TOP, ANCHOR_END_F, -hmin.height - theme_cache.panel_style->get_margin(SIDE_BOTTOM));
+	h_scroll->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, -theme_cache.panel_style->get_margin(SIDE_BOTTOM));
 
-	v_scroll->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END, -vmin.width - rmar);
-	v_scroll->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END, -rmar);
-	v_scroll->set_anchor_and_offset(SIDE_TOP, ANCHOR_BEGIN, theme_cache.panel_style->get_margin(SIDE_TOP));
-	v_scroll->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END, -hmin.height - theme_cache.panel_style->get_margin(SIDE_BOTTOM));
+	v_scroll->set_anchor_and_offset(SIDE_LEFT, ANCHOR_END_F, -vmin.width - rmar);
+	v_scroll->set_anchor_and_offset(SIDE_RIGHT, ANCHOR_END_F, -rmar);
+	v_scroll->set_anchor_and_offset(SIDE_TOP, ANCHOR_BEGIN_F, theme_cache.panel_style->get_margin(SIDE_TOP));
+	v_scroll->set_anchor_and_offset(SIDE_BOTTOM, ANCHOR_END_F, -hmin.height - theme_cache.panel_style->get_margin(SIDE_BOTTOM));
 
 	_updating_scrollbars = false;
 }

@@ -154,6 +154,7 @@ struct VariantUtilityFunctions {
 	static uint64_t rid_allocate_id();
 	static RID rid_from_int64(uint64_t p_base);
 	static bool is_same(const Variant &p_a, const Variant &p_b);
+	static int64_t layer_number_as_bitmask(int64_t layer_number);
 };
 
 #endif // VARIANT_UTILITY_H
