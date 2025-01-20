@@ -1079,7 +1079,7 @@ Dictionary Node3D::shoot_ray(const Vector3 &direction, float range, uint32_t lay
 	PhysicsDirectSpaceState3D::RayResult result;
 	PhysicsDirectSpaceState3D::RayParameters ray_parameters;
 	ray_parameters.from = get_position();
-	ray_parameters.to = ray_parameters.from + get_quaternion().xform_inv(direction) * range;
+	ray_parameters.to = ray_parameters.from + direction * range;
 	ray_parameters.collision_mask = layer;
 	bool success = get_world_3d()->get_direct_space_state()->intersect_ray(ray_parameters, result);
 
