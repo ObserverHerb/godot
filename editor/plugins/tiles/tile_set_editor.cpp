@@ -44,7 +44,6 @@
 #include "scene/gui/box_container.h"
 #include "scene/gui/control.h"
 #include "scene/gui/dialogs.h"
-#include "scene/gui/tab_container.h"
 
 TileSetEditor *TileSetEditor::singleton = nullptr;
 
@@ -845,7 +844,7 @@ TileSetEditor::TileSetEditor() {
 
 	source_sort_button = memnew(MenuButton);
 	source_sort_button->set_flat(false);
-	source_sort_button->set_theme_type_variation("FlatButton");
+	source_sort_button->set_theme_type_variation(SceneStringName(FlatButton));
 	source_sort_button->set_tooltip_text(TTR("Sort Sources"));
 
 	PopupMenu *p = source_sort_button->get_popup();
@@ -876,14 +875,14 @@ TileSetEditor::TileSetEditor() {
 	split_container_left_side->add_child(sources_bottom_actions);
 
 	sources_delete_button = memnew(Button);
-	sources_delete_button->set_theme_type_variation("FlatButton");
+	sources_delete_button->set_theme_type_variation(SceneStringName(FlatButton));
 	sources_delete_button->set_disabled(true);
 	sources_delete_button->connect(SceneStringName(pressed), callable_mp(this, &TileSetEditor::_source_delete_pressed));
 	sources_bottom_actions->add_child(sources_delete_button);
 
 	sources_add_button = memnew(MenuButton);
 	sources_add_button->set_flat(false);
-	sources_add_button->set_theme_type_variation("FlatButton");
+	sources_add_button->set_theme_type_variation(SceneStringName(FlatButton));
 	sources_add_button->get_popup()->add_item(TTR("Atlas"));
 	sources_add_button->get_popup()->set_item_tooltip(-1, TTR("A palette of tiles made from a texture."));
 	sources_add_button->get_popup()->add_item(TTR("Scenes Collection"));
@@ -893,7 +892,7 @@ TileSetEditor::TileSetEditor() {
 
 	sources_advanced_menu_button = memnew(MenuButton);
 	sources_advanced_menu_button->set_flat(false);
-	sources_advanced_menu_button->set_theme_type_variation("FlatButton");
+	sources_advanced_menu_button->set_theme_type_variation(SceneStringName(FlatButton));
 	sources_advanced_menu_button->get_popup()->add_item(TTR("Open Atlas Merging Tool"));
 	sources_advanced_menu_button->get_popup()->add_item(TTR("Manage Tile Proxies"));
 	sources_advanced_menu_button->get_popup()->connect(SceneStringName(id_pressed), callable_mp(this, &TileSetEditor::_sources_advanced_menu_id_pressed));

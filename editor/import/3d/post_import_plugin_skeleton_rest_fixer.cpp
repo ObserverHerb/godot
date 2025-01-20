@@ -30,7 +30,6 @@
 
 #include "post_import_plugin_skeleton_rest_fixer.h"
 
-#include "editor/import/3d/scene_import_settings.h"
 #include "scene/3d/bone_attachment_3d.h"
 #include "scene/3d/importer_mesh_instance_3d.h"
 #include "scene/3d/retarget_modifier_3d.h"
@@ -239,7 +238,7 @@ void PostImportPluginSkeletonRestFixer::internal_process(InternalImportCategory 
 				List<StringName> anims;
 				ap->get_animation_list(&anims);
 				for (const StringName &name : anims) {
-					if (String(name).contains("/")) {
+					if (String(name).contains_char('/')) {
 						continue; // Avoid animation library which may be created by importer dynamically.
 					}
 

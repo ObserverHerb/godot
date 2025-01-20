@@ -32,7 +32,6 @@
 
 #include "core/config/project_settings.h"
 #include "scene/3d/camera_3d.h"
-#include "scene/3d/visible_on_screen_notifier_3d.h"
 #include "scene/main/viewport.h"
 #include "scene/resources/camera_attributes.h"
 #include "scene/resources/environment.h"
