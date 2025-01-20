@@ -1272,7 +1272,7 @@ void TreeItem::clear_buttons() {
 
 void TreeItem::add_button(int p_column, const Ref<Texture2D> &p_button, int p_id, bool p_disabled, const String &p_tooltip) {
 	ERR_FAIL_INDEX(p_column, cells.size());
-	ERR_FAIL_COND(!p_button.is_valid());
+	ERR_FAIL_COND(p_button.is_null());
 	TreeItem::Cell::Button button;
 	button.texture = p_button;
 	if (p_id < 0) {
@@ -1947,7 +1947,7 @@ void Tree::draw_item_rect(TreeItem::Cell &p_cell, const Rect2i &p_rect, const Co
 
 	int w = 0;
 	Size2i bmsize;
-	if (!p_cell.icon.is_null()) {
+	if (p_cell.icon.is_valid()) {
 		bmsize = _get_cell_icon_size(p_cell);
 		w += bmsize.width + theme_cache.h_separation;
 		if (rect.size.width > 0 && (w + ts.width) > rect.size.width) {
@@ -1986,7 +1986,7 @@ void Tree::draw_item_rect(TreeItem::Cell &p_cell, const Rect2i &p_rect, const Co
 		rect.size.x -= ts.width + theme_cache.h_separation;
 	}
 
-	if (!p_cell.icon.is_null()) {
+	if (p_cell.icon.is_valid()) {
 		p_cell.draw_icon(ci, rect.position + Size2i(0, Math::floor((real_t)(rect.size.y - bmsize.y) / 2)), bmsize, p_icon_color);
 		rect.position.x += bmsize.x + theme_cache.h_separation;
 		rect.size.x -= bmsize.x + theme_cache.h_separation;
@@ -3244,7 +3244,7 @@ int Tree::propagate_mouse_event(const Point2i &p_pos, int x_ofs, int y_ofs, int 
 }
 
 void Tree::_text_editor_popup_modal_close() {
-	if (popup_edit_commited) {
+	if (popup_edit_committed) {
 		return; // Already processed by LineEdit/TextEdit commit.
 	}
 
@@ -3268,7 +3268,7 @@ void Tree::_text_editor_popup_modal_close() {
 }
 
 void Tree::_text_editor_gui_input(const Ref<InputEvent> &p_event) {
-	if (popup_edit_commited) {
+	if (popup_edit_committed) {
 		return; // Already processed by _text_editor_popup_modal_close
 	}
 
@@ -3279,7 +3279,7 @@ void Tree::_text_editor_gui_input(const Ref<InputEvent> &p_event) {
 	if (p_event->is_action_pressed("ui_text_newline_blank", true)) {
 		accept_event();
 	} else if (p_event->is_action_pressed("ui_text_newline")) {
-		popup_edit_commited = true; // End edit popup processing.
+		popup_edit_committed = true; // End edit popup processing.
 		popup_editor->hide();
 		_apply_multiline_edit();
 		accept_event();
@@ -3310,7 +3310,7 @@ void Tree::_apply_multiline_edit() {
 }
 
 void Tree::_line_editor_submit(String p_text) {
-	if (popup_edit_commited) {
+	if (popup_edit_committed) {
 		return; // Already processed by _text_editor_popup_modal_close
 	}
 
@@ -3318,7 +3318,7 @@ void Tree::_line_editor_submit(String p_text) {
 		return; // ESC pressed, app focus lost, or forced close from code.
 	}
 
-	popup_edit_commited = true; // End edit popup processing.
+	popup_edit_committed = true; // End edit popup processing.
 	popup_editor->hide();
 
 	if (!popup_edited_item) {
@@ -4283,7 +4283,7 @@ bool Tree::edit_selected(bool p_force_edit) {
 		if (!popup_editor->is_embedded()) {
 			popup_editor->set_content_scale_factor(popup_scale);
 		}
-		popup_edit_commited = false; // Start edit popup processing.
+		popup_edit_committed = false; // Start edit popup processing.
 		popup_editor->popup();
 		popup_editor->child_controls_changed();
 
@@ -4303,7 +4303,7 @@ bool Tree::edit_selected(bool p_force_edit) {
 		if (!popup_editor->is_embedded()) {
 			popup_editor->set_content_scale_factor(popup_scale);
 		}
-		popup_edit_commited = false; // Start edit popup processing.
+		popup_edit_committed = false; // Start edit popup processing.
 		popup_editor->popup();
 		popup_editor->child_controls_changed();
 
