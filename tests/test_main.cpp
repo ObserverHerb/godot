@@ -49,6 +49,7 @@
 #include "tests/core/io/test_ip.h"
 #include "tests/core/io/test_json.h"
 #include "tests/core/io/test_json_native.h"
+#include "tests/core/io/test_logger.h"
 #include "tests/core/io/test_marshalls.h"
 #include "tests/core/io/test_packet_peer.h"
 #include "tests/core/io/test_pck_packer.h"
@@ -101,6 +102,7 @@
 #include "tests/core/templates/test_oa_hash_map.h"
 #include "tests/core/templates/test_paged_array.h"
 #include "tests/core/templates/test_rid.h"
+#include "tests/core/templates/test_span.h"
 #include "tests/core/templates/test_vector.h"
 #include "tests/core/test_crypto.h"
 #include "tests/core/test_hashing_context.h"
@@ -142,6 +144,7 @@
 #include "tests/scene/test_visual_shader.h"
 #include "tests/scene/test_window.h"
 #include "tests/servers/rendering/test_shader_preprocessor.h"
+#include "tests/servers/test_nav_heap.h"
 #include "tests/servers/test_text_server.h"
 #include "tests/test_validate_testing.h"
 
@@ -305,7 +308,7 @@ struct GodotTestCaseListener : public doctest::IReporter {
 			// So we have to do this for each test case. Also make sure there is
 			// no residual theme from something else.
 			ThemeDB::get_singleton()->finalize_theme();
-			ThemeDB::get_singleton()->initialize_theme_noproject();
+			ThemeDB::get_singleton()->initialize_theme();
 
 #ifndef _3D_DISABLED
 			physics_server_3d = PhysicsServer3DManager::get_singleton()->new_default_server();

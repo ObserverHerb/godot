@@ -39,6 +39,7 @@
 #include "editor/multi_node_edit.h"
 #include "editor/plugins/editor_context_menu_plugin.h"
 #include "editor/plugins/editor_plugin.h"
+#include "scene/property_utils.h"
 #include "scene/resources/packed_scene.h"
 
 void EditorSelectionHistory::cleanup_history() {
@@ -335,12 +336,8 @@ void EditorData::set_editor_plugin_states(const Dictionary &p_states) {
 		return;
 	}
 
-	List<Variant> keys;
-	p_states.get_key_list(&keys);
-
-	List<Variant>::Element *E = keys.front();
-	for (; E; E = E->next()) {
-		String name = E->get();
+	for (const KeyValue<Variant, Variant> &kv : p_states) {
+		String name = kv.key;
 		int idx = -1;
 		for (int i = 0; i < editor_plugins.size(); i++) {
 			if (editor_plugins[i]->get_plugin_name() == name) {
@@ -352,7 +349,7 @@ void EditorData::set_editor_plugin_states(const Dictionary &p_states) {
 		if (idx == -1) {
 			continue;
 		}
-		editor_plugins[idx]->set_state(p_states[name]);
+		editor_plugins[idx]->set_state(kv.value);
 	}
 }
 
@@ -536,15 +533,18 @@ Variant EditorData::instantiate_custom_type(const String &p_type, const String &
 			if (get_custom_types()[p_inherits][i].name == p_type) {
 				Ref<Script> script = get_custom_types()[p_inherits][i].script;
 
-				Variant ob = ClassDB::instantiate(p_inherits);
-				ERR_FAIL_COND_V(!ob, Variant());
+				// Store in a variant to initialize the refcount if needed.
+				Variant v = ClassDB::instantiate(p_inherits);
+				ERR_FAIL_COND_V(!v, Variant());
+				Object *ob = v;
+
 				Node *n = Object::cast_to<Node>(ob);
 				if (n) {
 					n->set_name(p_type);
 				}
-				n->set_meta(SceneStringName(_custom_type_script), script);
-				((Object *)ob)->set_script(script);
-				return ob;
+				PropertyUtils::assign_custom_type_script(ob, script);
+				ob->set_script(script);
+				return v;
 			}
 		}
 	}
@@ -988,12 +988,13 @@ Variant EditorData::script_class_instance(const String &p_class) {
 		Ref<Script> script = script_class_load_script(p_class);
 		if (script.is_valid()) {
 			// Store in a variant to initialize the refcount if needed.
-			Variant obj = ClassDB::instantiate(script->get_instance_base_type());
-			if (obj) {
-				Object::cast_to<Object>(obj)->set_meta(SceneStringName(_custom_type_script), script);
-				obj.operator Object *()->set_script(script);
+			Variant v = ClassDB::instantiate(script->get_instance_base_type());
+			if (v) {
+				Object *obj = v;
+				PropertyUtils::assign_custom_type_script(obj, script);
+				obj->set_script(script);
 			}
-			return obj;
+			return v;
 		}
 	}
 	return Variant();
@@ -1024,7 +1025,7 @@ String EditorData::script_class_get_icon_path(const String &p_class, bool *r_val
 		}
 		HashMap<StringName, String>::ConstIterator E = _script_class_icon_paths.find(current);
 		if ((bool)E) {
-			if (r_valid) {
+			if (r_valid && !E->value.is_empty()) {
 				*r_valid = true;
 			}
 			return E->value;
@@ -1041,24 +1042,23 @@ void EditorData::script_class_set_name(const String &p_path, const StringName &p
 	_script_class_file_to_path[p_path] = p_class;
 }
 
-void EditorData::script_class_save_icon_paths() {
-	Array script_classes = ProjectSettings::get_singleton()->get_global_class_list();
-
-	Dictionary d;
-	for (const KeyValue<StringName, String> &E : _script_class_icon_paths) {
-		if (ScriptServer::is_global_class(E.key)) {
-			d[E.key] = E.value;
-		}
+void EditorData::script_class_save_global_classes() {
+	List<StringName> global_classes;
+	ScriptServer::get_global_class_list(&global_classes);
+	Array array_classes;
+	for (const StringName &class_name : global_classes) {
+		Dictionary d;
+		String *icon = _script_class_icon_paths.getptr(class_name);
+		d["class"] = class_name;
+		d["language"] = ScriptServer::get_global_class_language(class_name);
+		d["path"] = ScriptServer::get_global_class_path(class_name);
+		d["base"] = ScriptServer::get_global_class_base(class_name);
+		d["icon"] = icon ? *icon : String();
+		d["is_abstract"] = ScriptServer::is_global_class_abstract(class_name);
+		d["is_tool"] = ScriptServer::is_global_class_tool(class_name);
+		array_classes.push_back(d);
 	}
-
-	for (int i = 0; i < script_classes.size(); i++) {
-		Dictionary d2 = script_classes[i];
-		if (!d2.has("class")) {
-			continue;
-		}
-		d2["icon"] = d.get(d2["class"], "");
-	}
-	ProjectSettings::get_singleton()->store_global_class_list(script_classes);
+	ProjectSettings::get_singleton()->store_global_class_list(array_classes);
 }
 
 void EditorData::script_class_load_icon_paths() {
@@ -1067,12 +1067,10 @@ void EditorData::script_class_load_icon_paths() {
 #ifndef DISABLE_DEPRECATED
 	if (ProjectSettings::get_singleton()->has_setting("_global_script_class_icons")) {
 		Dictionary d = GLOBAL_GET("_global_script_class_icons");
-		List<Variant> keys;
-		d.get_key_list(&keys);
 
-		for (const Variant &E : keys) {
-			String name = E.operator String();
-			_script_class_icon_paths[name] = d[name];
+		for (const KeyValue<Variant, Variant> &kv : d) {
+			String name = kv.key.operator String();
+			_script_class_icon_paths[name] = kv.value;
 
 			String path = ScriptServer::get_global_class_path(name);
 			script_class_set_name(path, name);

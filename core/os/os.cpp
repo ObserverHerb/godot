@@ -214,12 +214,29 @@ String OS::get_locale() const {
 // Non-virtual helper to extract the 2 or 3-letter language code from
 // `get_locale()` in a way that's consistent for all platforms.
 String OS::get_locale_language() const {
-	return get_locale().left(3).replace("_", "");
+	return get_locale().left(3).remove_char('_');
 }
 
 // Embedded PCK offset.
 uint64_t OS::get_embedded_pck_offset() const {
 	return 0;
+}
+
+// Default boot screen rect scale mode is "Keep Aspect Centered"
+Rect2 OS::calculate_boot_screen_rect(const Size2 &p_window_size, const Size2 &p_imgrect_size) const {
+	Rect2 screenrect;
+	if (p_window_size.width > p_window_size.height) {
+		// Scale horizontally.
+		screenrect.size.y = p_window_size.height;
+		screenrect.size.x = p_imgrect_size.x * p_window_size.height / p_imgrect_size.y;
+		screenrect.position.x = (p_window_size.width - screenrect.size.x) / 2;
+	} else {
+		// Scale vertically.
+		screenrect.size.x = p_window_size.width;
+		screenrect.size.y = p_imgrect_size.y * p_window_size.width / p_imgrect_size.x;
+		screenrect.position.y = (p_window_size.height - screenrect.size.y) / 2;
+	}
+	return screenrect;
 }
 
 // Helper function to ensure that a dir name/path will be valid on the OS
@@ -257,7 +274,7 @@ String OS::get_safe_dir_name(const String &p_dir_name, bool p_allow_paths) const
 // Get properly capitalized engine name for system paths
 String OS::get_godot_dir_name() const {
 	// Default to lowercase, so only override when different case is needed
-	return String(VERSION_SHORT_NAME).to_lower();
+	return String(GODOT_VERSION_SHORT_NAME).to_lower();
 }
 
 // OS equivalent of XDG_DATA_HOME

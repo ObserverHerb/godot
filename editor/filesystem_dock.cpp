@@ -574,8 +574,6 @@ void FileSystemDock::_notification(int p_what) {
 		case NOTIFICATION_THEME_CHANGED: {
 			_update_display_mode(true);
 
-			button_reload->set_button_icon(get_editor_theme_icon(SNAME("Reload")));
-
 			StringName mode_icon = "Panels1";
 			if (display_mode == DISPLAY_MODE_VSPLIT) {
 				mode_icon = "Panels2";
@@ -1234,10 +1232,8 @@ void FileSystemDock::_select_file(const String &p_path, bool p_select_in_favorit
 		}
 
 		String resource_type = ResourceLoader::get_resource_type(fpath);
-
 		if (resource_type == "PackedScene" || resource_type == "AnimationLibrary") {
 			bool is_imported = false;
-
 			{
 				List<String> importer_exts;
 				ResourceImporterScene::get_scene_importer_extensions(&importer_exts);
@@ -1252,10 +1248,8 @@ void FileSystemDock::_select_file(const String &p_path, bool p_select_in_favorit
 
 			if (is_imported) {
 				SceneImportSettingsDialog::get_singleton()->open_settings(p_path, resource_type);
-			} else if (resource_type == "PackedScene") {
-				EditorNode::get_singleton()->open_request(fpath);
 			} else {
-				EditorNode::get_singleton()->load_resource(fpath);
+				EditorNode::get_singleton()->load_scene_or_resource(fpath);
 			}
 		} else if (ResourceLoader::is_imported(fpath)) {
 			// If the importer has advanced settings, show them.
@@ -1275,7 +1269,6 @@ void FileSystemDock::_select_file(const String &p_path, bool p_select_in_favorit
 			if (!used_advanced_settings) {
 				EditorNode::get_singleton()->load_resource(fpath);
 			}
-
 		} else {
 			EditorNode::get_singleton()->load_resource(fpath);
 		}
@@ -1291,12 +1284,13 @@ void FileSystemDock::_tree_activate_file() {
 		String file_path = selected->get_metadata(0);
 		TreeItem *parent = selected->get_parent();
 		bool is_favorite = parent != nullptr && parent->get_metadata(0) == "Favorites";
+		bool is_folder = file_path.ends_with("/");
 
-		if ((!is_favorite && file_path.ends_with("/")) || file_path == "Favorites") {
+		if ((!is_favorite && is_folder) || file_path == "Favorites") {
 			bool collapsed = selected->is_collapsed();
 			selected->set_collapsed(!collapsed);
 		} else {
-			_select_file(file_path, is_favorite && !file_path.ends_with("/"), false);
+			_select_file(file_path, is_favorite && !is_folder, is_favorite && is_folder);
 		}
 	}
 }
@@ -1337,6 +1331,10 @@ void FileSystemDock::_fs_changed() {
 	}
 
 	set_process(false);
+	if (had_focus) {
+		had_focus->grab_focus();
+		had_focus = nullptr;
+	}
 }
 
 void FileSystemDock::_set_scanning_mode() {
@@ -1488,11 +1486,6 @@ void FileSystemDock::_try_move_item(const FileOrFolder &p_item, const String &p_
 						break;
 					}
 				}
-			} else {
-				Ref<Resource> res = ResourceCache::get_ref(old_path);
-				if (res.is_valid()) {
-					res->set_path_cache(new_path);
-				}
 			}
 		}
 
@@ -1567,7 +1560,7 @@ void FileSystemDock::_update_resource_paths_after_move(const HashMap<String, Str
 		String extra_path;
 		int sep_pos = r->get_path().find("::");
 		if (sep_pos >= 0) {
-			extra_path = base_path.substr(sep_pos, base_path.length());
+			extra_path = base_path.substr(sep_pos);
 			base_path = base_path.substr(0, sep_pos);
 		}
 
@@ -1577,8 +1570,7 @@ void FileSystemDock::_update_resource_paths_after_move(const HashMap<String, Str
 		}
 	}
 
-	ScriptServer::save_global_classes();
-	EditorNode::get_editor_data().script_class_save_icon_paths();
+	EditorNode::get_editor_data().script_class_save_global_classes();
 	EditorFileSystem::get_singleton()->emit_signal(SNAME("script_classes_updated"));
 }
 
@@ -1634,7 +1626,7 @@ void FileSystemDock::_update_project_settings_after_move(const HashMap<String, S
 			// If the autoload resource paths has a leading "*", it indicates that it is a Singleton,
 			// so we have to handle both cases when updating.
 			String autoload = GLOBAL_GET(E.name);
-			String autoload_singleton = autoload.substr(1, autoload.length());
+			String autoload_singleton = autoload.substr(1);
 			if (p_renames.has(autoload)) {
 				ProjectSettings::get_singleton()->set_setting(E.name, p_renames[autoload]);
 			} else if (autoload.begins_with("*") && p_renames.has(autoload_singleton)) {
@@ -1712,8 +1704,7 @@ void FileSystemDock::_resource_removed(const Ref<Resource> &p_resource) {
 	const Ref<Script> &scr = p_resource;
 	if (scr.is_valid()) {
 		ScriptServer::remove_global_class_by_path(scr->get_path());
-		ScriptServer::save_global_classes();
-		EditorNode::get_editor_data().script_class_save_icon_paths();
+		EditorNode::get_editor_data().script_class_save_global_classes();
 		EditorFileSystem::get_singleton()->emit_signal(SNAME("script_classes_updated"));
 	}
 	emit_signal(SNAME("resource_removed"), p_resource);
@@ -2058,7 +2049,7 @@ Vector<String> FileSystemDock::_tree_get_selected(bool remove_self_inclusion, bo
 	TreeItem *selected = tree->get_root();
 	selected = tree->get_next_selected(selected);
 	while (selected) {
-		if (selected != cursor_item && selected != favorites_item) {
+		if (selected != cursor_item && selected != favorites_item && selected->is_visible_in_tree()) {
 			selected_strings.push_back(selected->get_metadata(0));
 		}
 		selected = tree->get_next_selected(selected);
@@ -2553,6 +2544,14 @@ void FileSystemDock::_file_option(int p_option, const Vector<String> &p_selected
 			}
 		} break;
 
+		case FILE_COPY_NAME: {
+			if (!p_selected.is_empty()) {
+				const String &fpath = p_selected[0];
+				const String file_name = fpath.get_file();
+				DisplayServer::get_singleton()->clipboard_set(file_name);
+			}
+		} break;
+
 		case FILE_COPY_UID: {
 			if (!p_selected.is_empty()) {
 				ResourceUID::ID uid = ResourceLoader::get_resource_uid(p_selected[0]);
@@ -2681,6 +2680,12 @@ bool FileSystemDock::_matches_all_search_tokens(const String &p_text) {
 }
 
 void FileSystemDock::_rescan() {
+	if (tree->has_focus()) {
+		had_focus = tree;
+	} else if (files->has_focus()) {
+		had_focus = files;
+	}
+
 	_set_scanning_mode();
 	EditorFileSystem::get_singleton()->scan();
 }
@@ -3279,6 +3284,7 @@ void FileSystemDock::_file_and_folders_fill_popup(PopupMenu *p_popup, const Vect
 	if (p_paths.size() == 1) {
 		p_popup->add_icon_shortcut(get_editor_theme_icon(SNAME("ActionCopy")), ED_GET_SHORTCUT("filesystem_dock/copy_path"), FILE_COPY_PATH);
 		p_popup->add_shortcut(ED_GET_SHORTCUT("filesystem_dock/copy_absolute_path"), FILE_COPY_ABSOLUTE_PATH);
+		p_popup->add_shortcut(ED_GET_SHORTCUT("filesystem_dock/copy_name"), FILE_COPY_NAME);
 		if (ResourceLoader::get_resource_uid(p_paths[0]) != ResourceUID::INVALID_ID) {
 			p_popup->add_icon_shortcut(get_editor_theme_icon(SNAME("Instance")), ED_GET_SHORTCUT("filesystem_dock/copy_uid"), FILE_COPY_UID);
 		}
@@ -3636,6 +3642,8 @@ void FileSystemDock::_tree_gui_input(Ref<InputEvent> p_event) {
 			_tree_rmb_option(FILE_COPY_PATH);
 		} else if (ED_IS_SHORTCUT("filesystem_dock/copy_absolute_path", p_event)) {
 			_tree_rmb_option(FILE_COPY_ABSOLUTE_PATH);
+		} else if (ED_IS_SHORTCUT("filesystem_dock/copy_name", p_event)) {
+			_tree_rmb_option(FILE_COPY_NAME);
 		} else if (ED_IS_SHORTCUT("filesystem_dock/copy_uid", p_event)) {
 			_tree_rmb_option(FILE_COPY_UID);
 		} else if (ED_IS_SHORTCUT("filesystem_dock/delete", p_event)) {
@@ -3701,7 +3709,7 @@ void FileSystemDock::_file_list_gui_input(Ref<InputEvent> p_event) {
 			if (fpath.size() > String("res://").size()) {
 				fpath = fpath.left(fpath.size() - 2); // Remove last '/'.
 				const int slash_idx = fpath.rfind_char('/');
-				fpath = fpath.substr(slash_idx + 1, fpath.size() - slash_idx - 1);
+				fpath = fpath.substr(slash_idx + 1);
 			}
 
 			tree_item = tree->get_item_with_text(fpath);
@@ -3719,6 +3727,8 @@ void FileSystemDock::_file_list_gui_input(Ref<InputEvent> p_event) {
 			_file_list_rmb_option(FILE_COPY_PATH);
 		} else if (ED_IS_SHORTCUT("filesystem_dock/copy_absolute_path", p_event)) {
 			_file_list_rmb_option(FILE_COPY_ABSOLUTE_PATH);
+		} else if (ED_IS_SHORTCUT("filesystem_dock/copy_name", p_event)) {
+			_tree_rmb_option(FILE_COPY_NAME);
 		} else if (ED_IS_SHORTCUT("filesystem_dock/delete", p_event)) {
 			_file_list_rmb_option(FILE_REMOVE);
 		} else if (ED_IS_SHORTCUT("filesystem_dock/rename", p_event)) {
@@ -4039,6 +4049,7 @@ FileSystemDock::FileSystemDock() {
 	// `KeyModifierMask::CMD_OR_CTRL | Key::C` conflicts with other editor shortcuts.
 	ED_SHORTCUT("filesystem_dock/copy_path", TTRC("Copy Path"), KeyModifierMask::CMD_OR_CTRL | KeyModifierMask::SHIFT | Key::C);
 	ED_SHORTCUT("filesystem_dock/copy_absolute_path", TTRC("Copy Absolute Path"), KeyModifierMask::CMD_OR_CTRL | KeyModifierMask::ALT | Key::C);
+	ED_SHORTCUT("filesystem_dock/copy_name", TTR("Copy Name"));
 	ED_SHORTCUT("filesystem_dock/copy_uid", TTRC("Copy UID"), KeyModifierMask::CMD_OR_CTRL | KeyModifierMask::ALT | KeyModifierMask::SHIFT | Key::C);
 	ED_SHORTCUT("filesystem_dock/duplicate", TTRC("Duplicate..."), KeyModifierMask::CMD_OR_CTRL | Key::D);
 	ED_SHORTCUT("filesystem_dock/delete", TTRC("Delete"), Key::KEY_DELETE);
@@ -4095,13 +4106,6 @@ FileSystemDock::FileSystemDock() {
 	current_path_line_edit->set_h_size_flags(SIZE_EXPAND_FILL);
 	_set_current_path_line_edit_text(current_path);
 	toolbar_hbc->add_child(current_path_line_edit);
-
-	button_reload = memnew(Button);
-	button_reload->connect(SceneStringName(pressed), callable_mp(this, &FileSystemDock::_rescan));
-	button_reload->set_focus_mode(FOCUS_NONE);
-	button_reload->set_tooltip_text(TTR("Re-Scan Filesystem"));
-	button_reload->hide();
-	toolbar_hbc->add_child(button_reload);
 
 	button_toggle_display_mode = memnew(Button);
 	button_toggle_display_mode->connect(SceneStringName(pressed), callable_mp(this, &FileSystemDock::_change_split_mode));
