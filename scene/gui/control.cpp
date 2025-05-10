@@ -50,10 +50,6 @@
 
 // TODO: Decouple controls from their editor plugin and get rid of this.
 #ifdef TOOLS_ENABLED
-enum Control::Anchor {
-	ANCHOR_BEGIN = static_cast<int>(Control::ANCHOR_BEGIN_F),
-	ANCHOR_END = static_cast<int>(Control::ANCHOR_END_F)
-};
 
 Dictionary Control::_edit_get_state() const {
 	Dictionary s;
