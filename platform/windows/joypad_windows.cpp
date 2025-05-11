@@ -479,7 +479,7 @@ void JoypadWindows::process_joypads() {
 }
 
 void JoypadWindows::post_hat(int p_device, DWORD p_dpad) {
-	BitField<HatMask> dpad_val;
+	BitField<HatMask> dpad_val = HatMask::CENTER;
 
 	// Should be -1 when centered, but according to docs:
 	// "Some drivers report the centered position of the POV indicator as 65,535. Determine whether the indicator is centered as follows:
@@ -525,7 +525,7 @@ float JoypadWindows::axis_correct(int p_val, bool p_xinput, bool p_trigger, bool
 		return p_trigger ? -1.0f : 0.0f;
 	}
 	if (!p_xinput) {
-		return (float)p_val / MAX_JOY_AXIS_F;
+		return p_val / MAX_JOY_AXIS_F;
 	}
 	if (p_trigger) {
 		// Convert to a value between -1.0f and 1.0f.
@@ -533,9 +533,9 @@ float JoypadWindows::axis_correct(int p_val, bool p_xinput, bool p_trigger, bool
 	}
 	float value;
 	if (p_val < 0) {
-		value = (float)p_val / MAX_JOY_AXIS_F;
+		value = p_val / MAX_JOY_AXIS_F;
 	} else {
-		value = (float)p_val / (MAX_JOY_AXIS_F - 1);
+		value = p_val / (MAX_JOY_AXIS_F - 1);
 	}
 	if (p_negate) {
 		value = -value;
