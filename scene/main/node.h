@@ -269,6 +269,8 @@ private:
 
 	} data;
 
+	static bool debug_mode;
+
 	Ref<MultiplayerAPI> multiplayer;
 
 	String _get_tree_string_pretty(const String &p_prefix, bool p_last);
@@ -475,6 +477,9 @@ public:
 	};
 
 	/* NODE/TREE */
+
+	bool get_debug_mode() const;
+	void set_debug_mode(bool enabled);
 
 	StringName get_name() const;
 	String get_description() const;

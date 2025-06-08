@@ -45,6 +45,7 @@
 #include "viewport.h"
 
 int Node::orphan_node_count = 0;
+bool Node::debug_mode = false;
 
 thread_local Node *Node::current_process_thread_group = nullptr;
 
@@ -630,6 +631,16 @@ void Node::_propagate_groups_dirty() {
 	for (KeyValue<StringName, Node *> &K : data.children) {
 		K.value->_propagate_groups_dirty();
 	}
+}
+
+bool Node::get_debug_mode() const
+{
+	return debug_mode;
+}
+
+void Node::set_debug_mode(bool enabled)
+{
+	debug_mode = enabled;
 }
 
 void Node::add_child_notify(Node *p_child) {
@@ -3846,6 +3857,8 @@ void Node::_bind_methods() {
 	ClassDB::bind_static_method("Node", D_METHOD("get_orphan_node_ids"), &Node::get_orphan_node_ids);
 	ClassDB::bind_method(D_METHOD("add_sibling", "sibling", "force_readable_name"), &Node::add_sibling, DEFVAL(false));
 
+	ClassDB::bind_method(D_METHOD("set_debug_mode", "enabled"), &Node::set_debug_mode);
+	ClassDB::bind_method(D_METHOD("get_debug_mode"), &Node::get_debug_mode);
 	ClassDB::bind_method(D_METHOD("set_name", "name"), &Node::set_name);
 	ClassDB::bind_method(D_METHOD("get_name"), &Node::get_name);
 	ClassDB::bind_method(D_METHOD("add_child", "node", "force_readable_name", "internal"), &Node::add_child, DEFVAL(false), DEFVAL(0));
@@ -4169,6 +4182,9 @@ void Node::_bind_methods() {
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "accessibility_described_by_nodes", PROPERTY_HINT_ARRAY_TYPE, "NodePath"), "set_accessibility_described_by_nodes", "get_accessibility_described_by_nodes");
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "accessibility_labeled_by_nodes", PROPERTY_HINT_ARRAY_TYPE, "NodePath"), "set_accessibility_labeled_by_nodes", "get_accessibility_labeled_by_nodes");
 	ADD_PROPERTY(PropertyInfo(Variant::ARRAY, "accessibility_flow_to_nodes", PROPERTY_HINT_ARRAY_TYPE, "NodePath"), "set_accessibility_flow_to_nodes", "get_accessibility_flow_to_nodes");
+
+	ADD_GROUP("Development", "development_");
+	ADD_PROPERTY(PropertyInfo(Variant::BOOL, "development_debug"), "set_debug_mode", "get_debug_mode");
 
 	GDVIRTUAL_BIND(_process, "delta");
 	GDVIRTUAL_BIND(_physics_process, "delta");
