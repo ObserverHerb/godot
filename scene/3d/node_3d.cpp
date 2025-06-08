@@ -1143,11 +1143,16 @@ void Node3D::look_at_from_position(const Vector3 &p_pos, const Vector3 &p_target
 	set_scale(original_scale);
 }
 
+Vector3 Node3D::ray_end(const Vector3 &direction,float range)
+{
+	return get_position() + direction * range;
+}
+
 Dictionary Node3D::shoot_ray(const Vector3 &direction, float range, uint32_t layer) {
 	PhysicsDirectSpaceState3D::RayResult result;
 	PhysicsDirectSpaceState3D::RayParameters ray_parameters;
 	ray_parameters.from = get_position();
-	ray_parameters.to = ray_parameters.from + direction * range;
+	ray_parameters.to = ray_end(direction, range);
 	ray_parameters.collision_mask = layer;
 	bool success = get_world_3d()->get_direct_space_state()->intersect_ray(ray_parameters, result);
 
@@ -1155,15 +1160,16 @@ Dictionary Node3D::shoot_ray(const Vector3 &direction, float range, uint32_t lay
 		return Dictionary();
 	}
 
-	Dictionary d;
-	d["position"] = result.position;
-	d["normal"] = result.normal;
-	d["collider_id"] = result.collider_id;
-	d["collider"] = result.collider;
-	d["shape"] = result.shape;
-	d["rid"] = result.rid;
+	Dictionary resultDictionary;
+	resultDictionary["position"] = result.position;
+	resultDictionary["normal"] = result.normal;
+	resultDictionary["collider_id"] = result.collider_id;
+	resultDictionary["collider"] = result.collider;
+	resultDictionary["distance"] = result.collider ? get_position().distance_to(Object::cast_to<Node3D>(result.collider)->get_position()) : 0;
+	resultDictionary["shape"] = result.shape;
+	resultDictionary["rid"] = result.rid;
 
-	return d;
+	return resultDictionary;
 }
 
 Vector3 Node3D::to_local(Vector3 p_global) const {
@@ -1413,6 +1419,7 @@ void Node3D::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("look_at", "target", "up", "use_model_front"), &Node3D::look_at, DEFVAL(Vector3(0, 1, 0)), DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("look_at_from_position", "position", "target", "up", "use_model_front"), &Node3D::look_at_from_position, DEFVAL(Vector3(0, 1, 0)), DEFVAL(false));
 
+	ClassDB::bind_method(D_METHOD("ray_end", "direction", "range"), &Node3D::ray_end);
 	ClassDB::bind_method(D_METHOD("shoot_ray", "direction", "range", "layer"), &Node3D::shoot_ray);
 
 	ClassDB::bind_method(D_METHOD("to_local", "global_point"), &Node3D::to_local);

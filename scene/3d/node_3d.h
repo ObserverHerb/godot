@@ -320,6 +320,7 @@ public:
 	void look_at(const Vector3 &p_target, const Vector3 &p_up = Vector3(0, 1, 0), bool p_use_model_front = false);
 	void look_at_from_position(const Vector3 &p_pos, const Vector3 &p_target, const Vector3 &p_up = Vector3(0, 1, 0), bool p_use_model_front = false);
 
+	Vector3 ray_end(const Vector3 &direction, float range);
 	Dictionary shoot_ray(const Vector3 &direction, float range, uint32_t layer);
 
 	Vector3 to_local(Vector3 p_global) const;
