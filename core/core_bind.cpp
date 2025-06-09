@@ -437,6 +437,14 @@ int OS::create_instance(const Vector<String> &p_arguments) {
 	return pid;
 }
 
+Error OS::open_with_program(const String &p_program_path, const Vector<String> &p_paths) {
+	List<String> paths;
+	for (const String &path : p_paths) {
+		paths.push_back(path);
+	}
+	return ::OS::get_singleton()->open_with_program(p_program_path, paths);
+}
+
 int OS::create_process(const String &p_path, const Vector<String> &p_arguments, bool p_open_console) {
 	List<String> args;
 	for (const String &arg : p_arguments) {
@@ -661,7 +669,7 @@ bool OS::is_debug_build() const {
 	return true;
 #else
 	return false;
-#endif
+#endif // DEBUG_ENABLED
 }
 
 String OS::get_system_dir(SystemDir p_dir, bool p_shared_storage) const {
@@ -755,6 +763,7 @@ void OS::_bind_methods() {
 	ClassDB::bind_method(D_METHOD("execute_with_pipe", "path", "arguments", "blocking"), &OS::execute_with_pipe, DEFVAL(true));
 	ClassDB::bind_method(D_METHOD("create_process", "path", "arguments", "open_console"), &OS::create_process, DEFVAL(false));
 	ClassDB::bind_method(D_METHOD("create_instance", "arguments"), &OS::create_instance);
+	ClassDB::bind_method(D_METHOD("open_with_program", "program_path", "paths"), &OS::open_with_program);
 	ClassDB::bind_method(D_METHOD("kill", "pid"), &OS::kill);
 	ClassDB::bind_method(D_METHOD("shell_open", "uri"), &OS::shell_open);
 	ClassDB::bind_method(D_METHOD("shell_show_in_file_manager", "file_or_dir_path", "open_folder"), &OS::shell_show_in_file_manager, DEFVAL(true));
@@ -1669,13 +1678,13 @@ TypedArray<Dictionary> ClassDB::class_get_method_list(const StringName &p_class,
 	TypedArray<Dictionary> ret;
 
 	for (const MethodInfo &E : methods) {
-#ifdef DEBUG_METHODS_ENABLED
+#ifdef DEBUG_ENABLED
 		ret.push_back(E.operator Dictionary());
 #else
 		Dictionary dict;
 		dict["name"] = E.name;
 		ret.push_back(dict);
-#endif
+#endif // DEBUG_ENABLED
 	}
 
 	return ret;

@@ -148,6 +148,8 @@ static void _add_qualifiers_to_rt(const String &p_qualifiers, RichTextLabel *p_r
 			hint = TTR("This method supports a variable number of arguments.");
 		} else if (qualifier == "virtual") {
 			hint = TTR("This method is called by the engine.\nIt can be overridden to customize built-in behavior.");
+		} else if (qualifier == "required") {
+			hint = TTR("This method is required to be overridden when extending its base class.");
 		} else if (qualifier == "const") {
 			hint = TTR("This method has no side effects.\nIt does not modify the object in any way.");
 		} else if (qualifier == "static") {
@@ -2393,7 +2395,8 @@ static void _add_text_to_rt(const String &p_bbcode, RichTextLabel *p_rt, const C
 		}
 	}
 
-	const bool using_tab_indent = int(EDITOR_GET("text_editor/behavior/indent/type")) == 0;
+	const bool using_space_indent = int(EDITOR_GET("text_editor/behavior/indent/type")) == 1;
+	const int indent_size = MAX(1, int(EDITOR_GET("text_editor/behavior/indent/size")));
 
 	const Ref<Font> doc_font = p_owner_node->get_theme_font(SNAME("doc"), EditorStringName(EditorFonts));
 	const Ref<Font> doc_bold_font = p_owner_node->get_theme_font(SNAME("doc_bold"), EditorStringName(EditorFonts));
@@ -2419,7 +2422,7 @@ static void _add_text_to_rt(const String &p_bbcode, RichTextLabel *p_rt, const C
 	const Color kbd_bg_color = p_owner_node->get_theme_color(SNAME("kbd_bg_color"), SNAME("EditorHelp"));
 	const Color param_bg_color = p_owner_node->get_theme_color(SNAME("param_bg_color"), SNAME("EditorHelp"));
 
-	String bbcode = p_bbcode.dedent().remove_chars("\t\r").strip_edges();
+	String bbcode = p_bbcode.dedent().remove_chars("\r").strip_edges();
 
 	// Select the correct code examples.
 	switch ((int)EDITOR_GET("text_editor/help/class_reference_examples")) {
@@ -2659,19 +2662,19 @@ static void _add_text_to_rt(const String &p_bbcode, RichTextLabel *p_rt, const C
 			const String codeblock_text = bbcode.substr(brk_end + 1, end_pos - (brk_end + 1)).strip_edges();
 
 			String codeblock_copy_text = codeblock_text;
-			if (using_tab_indent) {
-				// Replace the code block's space indentation with tabs.
+			if (using_space_indent) {
+				// Replace the code block's tab indentation with spaces.
 				StringBuilder builder;
 				PackedStringArray text_lines = codeblock_copy_text.split("\n");
 				for (const String &line : text_lines) {
 					const String stripped_line = line.dedent();
-					const int space_count = line.length() - stripped_line.length();
+					const int tab_count = line.length() - stripped_line.length();
 
 					if (builder.num_strings_appended() > 0) {
 						builder.append("\n");
 					}
-					if (space_count > 0) {
-						builder.append(String("\t").repeat(MAX(space_count / 4, 1)) + stripped_line);
+					if (tab_count > 0) {
+						builder.append(String(" ").repeat(tab_count * indent_size) + stripped_line);
 					} else {
 						builder.append(line);
 					}
@@ -3249,9 +3252,26 @@ void EditorHelp::_notification(int p_what) {
 			update_toggle_files_button();
 		} break;
 
-		case NOTIFICATION_LAYOUT_DIRECTION_CHANGED:
-		case NOTIFICATION_TRANSLATION_CHANGED:
 		case NOTIFICATION_VISIBILITY_CHANGED: {
+			if (update_pending && is_visible_in_tree()) {
+				_update_doc();
+			}
+			update_toggle_files_button();
+		} break;
+
+		case NOTIFICATION_TRANSLATION_CHANGED: {
+			if (!is_ready()) {
+				break;
+			}
+
+			if (is_visible_in_tree()) {
+				_update_doc();
+			} else {
+				update_pending = true;
+			}
+			[[fallthrough]];
+		}
+		case NOTIFICATION_LAYOUT_DIRECTION_CHANGED: {
 			update_toggle_files_button();
 		} break;
 	}
@@ -3372,6 +3392,7 @@ EditorHelp::EditorHelp() {
 
 	toggle_files_button = memnew(Button);
 	toggle_files_button->set_accessibility_name(TTRC("Scripts"));
+	toggle_files_button->set_tooltip_auto_translate_mode(AUTO_TRANSLATE_MODE_DISABLED);
 	toggle_files_button->set_flat(true);
 	toggle_files_button->connect(SceneStringName(pressed), callable_mp(this, &EditorHelp::_toggle_files_pressed));
 	status_bar->add_child(toggle_files_button);
@@ -4315,7 +4336,7 @@ void EditorHelpBit::parse_symbol(const String &p_symbol, const String &p_prologu
 			help_data.doc_type.type = ResourceLoader::get_resource_type(path);
 			if (help_data.doc_type.type.is_empty()) {
 				const Vector<String> textfile_ext = ((String)(EDITOR_GET("docks/filesystem/textfile_extensions"))).split(",", false);
-				symbol_type = textfile_ext.has(path.get_extension()) ? TTR("TextFile") : TTR("File");
+				symbol_type = textfile_ext.has(path.get_extension()) ? TTR("Text File") : TTR("File");
 			} else {
 				symbol_type = TTR("Resource");
 				symbol_hint = SYMBOL_HINT_ASSIGNABLE;
@@ -4497,7 +4518,7 @@ void EditorHelpBitTooltip::_notification(int p_what) {
 						queue_free();
 					}
 				} else if (!Input::get_singleton()->get_last_mouse_velocity().is_zero_approx()) {
-					if (!_is_mouse_inside_tooltip && OS::get_singleton()->get_ticks_msec() - _enter_tree_time > 250) {
+					if (!_is_mouse_inside_tooltip && OS::get_singleton()->get_ticks_msec() - _enter_tree_time > 350) {
 						_start_timer();
 					}
 				}
@@ -4779,7 +4800,7 @@ FindBar::FindBar() {
 	find_prev->set_tooltip_text(TTR("Previous Match"));
 	find_prev->set_accessibility_name(TTRC("Previous Match"));
 	add_child(find_prev);
-	find_prev->set_focus_mode(FOCUS_NONE);
+	find_prev->set_focus_mode(FOCUS_ACCESSIBILITY);
 	find_prev->connect(SceneStringName(pressed), callable_mp(this, &FindBar::search_prev));
 
 	find_next = memnew(Button);
@@ -4788,14 +4809,14 @@ FindBar::FindBar() {
 	find_next->set_tooltip_text(TTR("Next Match"));
 	find_next->set_accessibility_name(TTRC("Next Match"));
 	add_child(find_next);
-	find_next->set_focus_mode(FOCUS_NONE);
+	find_next->set_focus_mode(FOCUS_ACCESSIBILITY);
 	find_next->connect(SceneStringName(pressed), callable_mp(this, &FindBar::search_next));
 
 	hide_button = memnew(Button);
 	hide_button->set_flat(true);
 	hide_button->set_tooltip_text(TTR("Hide"));
 	hide_button->set_accessibility_name(TTRC("Hide"));
-	hide_button->set_focus_mode(FOCUS_NONE);
+	hide_button->set_focus_mode(FOCUS_ACCESSIBILITY);
 	hide_button->connect(SceneStringName(pressed), callable_mp(this, &FindBar::_hide_bar));
 	hide_button->set_v_size_flags(SIZE_SHRINK_CENTER);
 	add_child(hide_button);
@@ -4813,6 +4834,8 @@ void FindBar::popup_search() {
 		search_text->select_all();
 		search_text->set_caret_column(search_text->get_text().length());
 		if (grabbed_focus) {
+			rich_text_label->deselect();
+			results_count_to_current = 0;
 			_search();
 		}
 	}

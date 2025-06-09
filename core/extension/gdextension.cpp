@@ -87,7 +87,7 @@ public:
 	virtual bool is_valid() const override { return valid; }
 #endif
 
-#ifdef DEBUG_METHODS_ENABLED
+#ifdef DEBUG_ENABLED
 	virtual GodotTypeInfo::Metadata get_argument_meta(int p_arg) const override {
 		if (p_arg < 0) {
 			return return_value_metadata;
@@ -95,7 +95,7 @@ public:
 			return arguments_metadata.get(p_arg);
 		}
 	}
-#endif
+#endif // DEBUG_ENABLED
 
 	virtual Variant call(Object *p_object, const Variant **p_args, int p_arg_count, Callable::CallError &r_error) const override {
 #ifdef TOOLS_ENABLED
@@ -219,9 +219,9 @@ public:
 		_set_returns(p_method_info->has_return_value);
 		_set_const(p_method_info->method_flags & GDEXTENSION_METHOD_FLAG_CONST);
 		_set_static(p_method_info->method_flags & GDEXTENSION_METHOD_FLAG_STATIC);
-#ifdef DEBUG_METHODS_ENABLED
+#ifdef DEBUG_ENABLED
 		_generate_argument_types(p_method_info->argument_count);
-#endif
+#endif // DEBUG_ENABLED
 		set_argument_count(p_method_info->argument_count);
 
 		Vector<Variant> defargs;
@@ -862,6 +862,19 @@ String GDExtensionResourceLoader::get_resource_type(const String &p_path) const 
 }
 
 #ifdef TOOLS_ENABLED
+void GDExtensionResourceLoader::get_classes_used(const String &p_path, HashSet<StringName> *r_classes) {
+	Ref<GDExtension> gdext = ResourceLoader::load(p_path);
+	if (gdext.is_null()) {
+		return;
+	}
+
+	for (const StringName class_name : gdext->get_classes_used()) {
+		if (ClassDB::class_exists(class_name)) {
+			r_classes->insert(class_name);
+		}
+	}
+}
+
 bool GDExtension::has_library_changed() const {
 	return loader->has_library_changed();
 }

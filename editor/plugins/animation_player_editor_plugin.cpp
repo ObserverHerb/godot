@@ -41,6 +41,7 @@
 #include "editor/gui/editor_file_dialog.h"
 #include "editor/gui/editor_validation_panel.h"
 #include "editor/inspector_dock.h"
+#include "editor/plugins/animation_tree_editor_plugin.h"
 #include "editor/plugins/canvas_item_editor_plugin.h" // For onion skinning.
 #include "editor/plugins/node_3d_editor_plugin.h" // For onion skinning.
 #include "editor/scene_tree_dock.h"
@@ -79,6 +80,7 @@ void AnimationPlayerEditor::_node_removed(Node *p_node) {
 void AnimationPlayerEditor::_notification(int p_what) {
 	switch (p_what) {
 		case NOTIFICATION_PROCESS: {
+			finishing = false;
 			if (!player || is_dummy) {
 				track_editor->show_inactive_player_warning(false);
 			} else {
@@ -1209,6 +1211,9 @@ void AnimationPlayerEditor::edit(AnimationMixer *p_node, AnimationPlayer *p_play
 		if (player->is_connected(SNAME("animation_list_changed"), callable_mp(this, &AnimationPlayerEditor::_animation_libraries_updated))) {
 			player->disconnect(SNAME("animation_list_changed"), callable_mp(this, &AnimationPlayerEditor::_animation_libraries_updated));
 		}
+		if (player->is_connected(SceneStringName(animation_finished), callable_mp(this, &AnimationPlayerEditor::_animation_finished))) {
+			player->disconnect(SceneStringName(animation_finished), callable_mp(this, &AnimationPlayerEditor::_animation_finished));
+		}
 		if (player->is_connected(SNAME("current_animation_changed"), callable_mp(this, &AnimationPlayerEditor::_current_animation_changed))) {
 			player->disconnect(SNAME("current_animation_changed"), callable_mp(this, &AnimationPlayerEditor::_current_animation_changed));
 		}
@@ -1235,6 +1240,9 @@ void AnimationPlayerEditor::edit(AnimationMixer *p_node, AnimationPlayer *p_play
 	if (player) {
 		if (!player->is_connected(SNAME("animation_list_changed"), callable_mp(this, &AnimationPlayerEditor::_animation_libraries_updated))) {
 			player->connect(SNAME("animation_list_changed"), callable_mp(this, &AnimationPlayerEditor::_animation_libraries_updated), CONNECT_DEFERRED);
+		}
+		if (!player->is_connected(SceneStringName(animation_finished), callable_mp(this, &AnimationPlayerEditor::_animation_finished))) {
+			player->connect(SceneStringName(animation_finished), callable_mp(this, &AnimationPlayerEditor::_animation_finished));
 		}
 		if (!player->is_connected(SNAME("current_animation_changed"), callable_mp(this, &AnimationPlayerEditor::_current_animation_changed))) {
 			player->connect(SNAME("current_animation_changed"), callable_mp(this, &AnimationPlayerEditor::_current_animation_changed));
@@ -1427,9 +1435,16 @@ void AnimationPlayerEditor::_list_changed() {
 	}
 }
 
+void AnimationPlayerEditor::_animation_finished(const String &p_name) {
+	finishing = true;
+}
+
 void AnimationPlayerEditor::_current_animation_changed(const String &p_name) {
 	if (is_visible_in_tree()) {
-		if (p_name.is_empty()) {
+		if (finishing) {
+			finishing = false; // Maybe redundant since it will be false in the AnimationPlayerEditor::_process(), but for safety.
+			return;
+		} else if (p_name.is_empty()) {
 			// Means [stop].
 			frame->set_value(0);
 			track_editor->set_anim_pos(0);
@@ -2409,6 +2424,10 @@ bool AnimationPlayerEditorPlugin::handles(Object *p_object) const {
 
 void AnimationPlayerEditorPlugin::make_visible(bool p_visible) {
 	if (p_visible) {
+		// if AnimationTree editor is visible, do not occupy the bottom panel
+		if (AnimationTreeEditor::get_singleton() && AnimationTreeEditor::get_singleton()->is_visible_in_tree()) {
+			return;
+		}
 		EditorNode::get_bottom_panel()->make_item_visible(anim_editor);
 		anim_editor->set_process(true);
 		anim_editor->ensure_visibility();
