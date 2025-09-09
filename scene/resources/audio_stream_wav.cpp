@@ -875,20 +875,28 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 
 			char list_id[4];
 			file->get_buffer((uint8_t *)&list_id, 4);
+			uint32_t end_of_chunk = file_pos + chunksize - 8;
 
 			if (list_id[0] == 'I' && list_id[1] == 'N' && list_id[2] == 'F' && list_id[3] == 'O') {
 				// 'INFO' list type.
 				// The size of an entry can be arbitrary.
-				uint32_t end_of_chunk = file_pos + chunksize - 4;
 				while (file->get_position() < end_of_chunk) {
 					char info_id[4];
 					file->get_buffer((uint8_t *)&info_id, 4);
 
 					uint32_t text_size = file->get_32();
+					if (text_size == 0) {
+						continue;
+					}
 
 					Vector<char> text;
 					text.resize(text_size);
 					file->get_buffer((uint8_t *)&text[0], text_size);
+
+					// Skip padding byte if text_size is odd
+					if (text_size & 1) {
+						file->get_8();
+					}
 
 					// The data is always an ASCII string. ASCII is a subset of UTF-8.
 					String tag;
@@ -1145,22 +1153,35 @@ Ref<AudioStreamWAV> AudioStreamWAV::load_from_buffer(const Vector<uint8_t> &p_st
 	if (!tag_map.is_empty()) {
 		// Used to make the metadata tags more unified across different AudioStreams.
 		// See https://www.recordingblogs.com/wiki/list-chunk-of-a-wave-file
+		// https://wiki.hydrogenaudio.org/index.php?title=Tag_Mapping#Mapping_Tables
 		HashMap<String, String> tag_id_remaps;
 		tag_id_remaps.reserve(15);
 		tag_id_remaps["IARL"] = "location";
 		tag_id_remaps["IART"] = "artist";
 		tag_id_remaps["ICMS"] = "organization";
-		tag_id_remaps["ICMT"] = "comments";
+		tag_id_remaps["ICMT"] = "comment";
+		tag_id_remaps["ICNT"] = "releasecountry";
 		tag_id_remaps["ICOP"] = "copyright";
 		tag_id_remaps["ICRD"] = "date";
+		tag_id_remaps["IENC"] = "encodedby";
+		tag_id_remaps["IENG"] = "engineer";
+		tag_id_remaps["IFRM"] = "tracktotal";
 		tag_id_remaps["IGNR"] = "genre";
 		tag_id_remaps["IKEY"] = "keywords";
-		tag_id_remaps["IMED"] = "medium";
+		tag_id_remaps["ILNG"] = "language";
+		tag_id_remaps["IMED"] = "media";
+		tag_id_remaps["IMUS"] = "composer";
 		tag_id_remaps["INAM"] = "title";
 		tag_id_remaps["IPRD"] = "album";
+		tag_id_remaps["IPRO"] = "producer";
+		tag_id_remaps["IPRT"] = "tracknumber";
 		tag_id_remaps["ISBJ"] = "description";
-		tag_id_remaps["ISFT"] = "software";
+		tag_id_remaps["ISFT"] = "encoder";
+		tag_id_remaps["ISRF"] = "media";
+		tag_id_remaps["ITCH"] = "encodedby";
 		tag_id_remaps["ITRK"] = "tracknumber";
+		tag_id_remaps["IWRI"] = "author";
+		tag_id_remaps["TLEN"] = "length";
 		Dictionary tag_dictionary;
 		for (const KeyValue<String, String> &E : tag_map) {
 			HashMap<String, String>::ConstIterator remap = tag_id_remaps.find(E.key);

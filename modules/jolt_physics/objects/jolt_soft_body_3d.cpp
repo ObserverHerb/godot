@@ -74,7 +74,8 @@ JPH::ObjectLayer JoltSoftBody3D::_get_object_layer() const {
 void JoltSoftBody3D::_space_changing() {
 	JoltObject3D::_space_changing();
 
-	if (in_space()) {
+	// Note that we should not use `in_space()` as the condition here, since we could have cleared the mesh at this point.
+	if (jolt_body != nullptr) {
 		jolt_settings = new JPH::SoftBodyCreationSettings(jolt_body->GetSoftBodyCreationSettings());
 		jolt_settings->mSettings = nullptr;
 	}
@@ -110,7 +111,7 @@ void JoltSoftBody3D::_add_to_space() {
 	jolt_settings->mCollisionGroup = JPH::CollisionGroup(nullptr, group_id, sub_group_id);
 	jolt_settings->mMaxLinearVelocity = JoltProjectSettings::max_linear_velocity;
 
-	JPH::Body *new_jolt_body = space->add_soft_body(*this, *jolt_settings);
+	JPH::Body *new_jolt_body = space->add_object(*this, *jolt_settings);
 	if (new_jolt_body == nullptr) {
 		return;
 	}
@@ -127,6 +128,10 @@ bool JoltSoftBody3D::_ref_shared_data() {
 	if (iter_shared_data == mesh_to_shared.end()) {
 		RenderingServer *rendering = RenderingServer::get_singleton();
 
+		// TODO: calling RenderingServer::mesh_surface_get_arrays() from the physics thread
+		// is not safe and can deadlock when physics/3d/run_on_separate_thread is enabled.
+		// This method blocks on the main thread to return data, but the main thread may be
+		// blocked waiting on us in PhysicsServer3D::sync().
 		const Array mesh_data = rendering->mesh_surface_get_arrays(mesh, 0);
 		ERR_FAIL_COND_V(mesh_data.is_empty(), false);
 
@@ -152,6 +157,9 @@ bool JoltSoftBody3D::_ref_shared_data() {
 		const int mesh_index_count = mesh_indices.size();
 
 		mesh_to_physics.resize(mesh_vertex_count);
+		for (int &index : mesh_to_physics) {
+			index = -1;
+		}
 		physics_vertices.reserve(mesh_vertex_count);
 		vertex_to_physics.reserve(mesh_vertex_count);
 
@@ -326,6 +334,10 @@ void JoltSoftBody3D::_exceptions_changed() {
 	_update_group_filter();
 }
 
+void JoltSoftBody3D::_motion_changed() {
+	wake_up();
+}
+
 JoltSoftBody3D::JoltSoftBody3D() :
 		JoltObject3D(OBJECT_TYPE_SOFT_BODY) {
 	jolt_settings->mRestitution = 0.0f;
@@ -400,7 +412,8 @@ void JoltSoftBody3D::apply_vertex_impulse(int p_index, const Vector3 &p_impulse)
 
 	ERR_FAIL_NULL(shared);
 	ERR_FAIL_INDEX(p_index, (int)shared->mesh_to_physics.size());
-	const size_t physics_index = (size_t)shared->mesh_to_physics[p_index];
+	const int physics_index = shared->mesh_to_physics[p_index];
+	ERR_FAIL_COND_MSG(physics_index < 0, vformat("Soft body vertex %d was not used by a face and has been omitted for '%s'. No impulse can be applied.", p_index, to_string()));
 	ERR_FAIL_COND_MSG(pinned_vertices.has(physics_index), vformat("Failed to apply impulse to point at index %d for '%s'. Point was found to be pinned.", static_cast<int>(physics_index), to_string()));
 
 	JPH::SoftBodyMotionProperties &motion_properties = static_cast<JPH::SoftBodyMotionProperties &>(*jolt_body->GetMotionPropertiesUnchecked());
@@ -410,7 +423,7 @@ void JoltSoftBody3D::apply_vertex_impulse(int p_index, const Vector3 &p_impulse)
 
 	physics_vertex.mVelocity += to_jolt(p_impulse) * physics_vertex.mInvMass;
 
-	wake_up();
+	_motion_changed();
 }
 
 void JoltSoftBody3D::apply_vertex_force(int p_index, const Vector3 &p_force) {
@@ -421,7 +434,6 @@ void JoltSoftBody3D::apply_vertex_force(int p_index, const Vector3 &p_force) {
 
 void JoltSoftBody3D::apply_central_impulse(const Vector3 &p_impulse) {
 	ERR_FAIL_COND_MSG(!in_space(), vformat("Failed to apply central impulse to '%s'. Doing so without a physics space is not supported when using Jolt Physics. If this relates to a node, try adding the node to a scene tree first.", to_string()));
-	ERR_FAIL_NULL(shared);
 
 	JPH::SoftBodyMotionProperties &motion_properties = static_cast<JPH::SoftBodyMotionProperties &>(*jolt_body->GetMotionPropertiesUnchecked());
 	JPH::Array<JPH::SoftBodyVertex> &physics_vertices = motion_properties.GetVertices();
@@ -434,16 +446,15 @@ void JoltSoftBody3D::apply_central_impulse(const Vector3 &p_impulse) {
 		}
 	}
 
-	wake_up();
+	_motion_changed();
 }
 
 void JoltSoftBody3D::apply_central_force(const Vector3 &p_force) {
 	ERR_FAIL_COND_MSG(!in_space(), vformat("Failed to apply central force to '%s'. Doing so without a physics space is not supported when using Jolt Physics. If this relates to a node, try adding the node to a scene tree first.", to_string()));
-	ERR_FAIL_NULL(shared);
 
-	JPH::BodyInterface &body_iface = space->get_body_iface();
+	jolt_body->AddForce(to_jolt(p_force));
 
-	body_iface.AddForce(jolt_body->GetID(), to_jolt(p_force), JPH::EActivation::Activate);
+	_motion_changed();
 }
 
 void JoltSoftBody3D::set_is_sleeping(bool p_enabled) {
@@ -451,13 +462,7 @@ void JoltSoftBody3D::set_is_sleeping(bool p_enabled) {
 		return;
 	}
 
-	JPH::BodyInterface &body_iface = space->get_body_iface();
-
-	if (p_enabled) {
-		body_iface.DeactivateBody(jolt_body->GetID());
-	} else {
-		body_iface.ActivateBody(jolt_body->GetID());
-	}
+	space->set_is_object_sleeping(jolt_body->GetID(), p_enabled);
 }
 
 bool JoltSoftBody3D::is_sleep_allowed() const {
@@ -609,6 +614,7 @@ void JoltSoftBody3D::set_transform(const Transform3D &p_transform) {
 		vertex.mPosition = vertex.mPreviousPosition = relative_transform * vertex.mPosition;
 		vertex.mVelocity = JPH::Vec3::sZero();
 	}
+	wake_up();
 }
 
 AABB JoltSoftBody3D::get_bounds() const {
@@ -632,8 +638,13 @@ void JoltSoftBody3D::update_rendering_server(PhysicsServer3DRenderingServerHandl
 
 	const int physics_vertex_count = (int)physics_vertices.size();
 
+	normals.clear();
 	normals.resize(physics_vertex_count);
 
+	// Compute vertex normals using smooth-shading:
+	// Each vertex should use the average normal of all faces it is a part of.
+	// Iterate over each face, and add the face normal to each of the face vertices.
+	// By the end of the loop, each vertex normal will be the sum of all face normals it belongs to.
 	for (const SoftBodyFace &physics_face : physics_faces) {
 		// Jolt uses a different winding order, so we swap the indices to account for that.
 
@@ -647,21 +658,31 @@ void JoltSoftBody3D::update_rendering_server(PhysicsServer3DRenderingServerHandl
 
 		const Vector3 normal = (v2 - v0).cross(v1 - v0).normalized();
 
-		normals[i0] = normal;
-		normals[i1] = normal;
-		normals[i2] = normal;
+		normals[i0] += normal;
+		normals[i1] += normal;
+		normals[i2] += normal;
+	}
+	// Normalize the vertex normals to have length 1.0
+	for (Vector3 &n : normals) {
+		real_t len = n.length();
+		// Some normals may have length 0 if the face was degenerate,
+		// so don't divide by zero.
+		if (len > CMP_EPSILON) {
+			n /= len;
+		}
 	}
 
 	const int mesh_vertex_count = shared->mesh_to_physics.size();
 
 	for (int i = 0; i < mesh_vertex_count; ++i) {
 		const int physics_index = shared->mesh_to_physics[i];
+		if (physics_index >= 0) {
+			const Vector3 vertex = to_godot(physics_vertices[(size_t)physics_index].mPosition);
+			const Vector3 normal = normals[(uint32_t)physics_index];
 
-		const Vector3 vertex = to_godot(physics_vertices[(size_t)physics_index].mPosition);
-		const Vector3 normal = normals[(uint32_t)physics_index];
-
-		p_rendering_server_handler->set_vertex(i, vertex);
-		p_rendering_server_handler->set_normal(i, normal);
+			p_rendering_server_handler->set_vertex(i, vertex);
+			p_rendering_server_handler->set_normal(i, normal);
+		}
 	}
 
 	p_rendering_server_handler->set_aabb(get_bounds());
@@ -672,7 +693,8 @@ Vector3 JoltSoftBody3D::get_vertex_position(int p_index) {
 
 	ERR_FAIL_NULL_V(shared, Vector3());
 	ERR_FAIL_INDEX_V(p_index, (int)shared->mesh_to_physics.size(), Vector3());
-	const size_t physics_index = (size_t)shared->mesh_to_physics[p_index];
+	const int physics_index = shared->mesh_to_physics[p_index];
+	ERR_FAIL_COND_V_MSG(physics_index < 0, Vector3(), vformat("Soft body vertex %d was not used by a face and has been omitted for '%s'. Position cannot be returned.", p_index, to_string()));
 
 	const JPH::SoftBodyMotionProperties &motion_properties = static_cast<const JPH::SoftBodyMotionProperties &>(*jolt_body->GetMotionPropertiesUnchecked());
 	const JPH::Array<JPH::SoftBodyVertex> &physics_vertices = motion_properties.GetVertices();
@@ -686,7 +708,8 @@ void JoltSoftBody3D::set_vertex_position(int p_index, const Vector3 &p_position)
 
 	ERR_FAIL_NULL(shared);
 	ERR_FAIL_INDEX(p_index, (int)shared->mesh_to_physics.size());
-	const size_t physics_index = (size_t)shared->mesh_to_physics[p_index];
+	const int physics_index = shared->mesh_to_physics[p_index];
+	ERR_FAIL_COND_MSG(physics_index < 0, vformat("Soft body vertex %d was not used by a face and has been omitted for '%s'. Position cannot be set.", p_index, to_string()));
 
 	JPH::SoftBodyMotionProperties &motion_properties = static_cast<JPH::SoftBodyMotionProperties &>(*jolt_body->GetMotionPropertiesUnchecked());
 	JPH::Array<JPH::SoftBodyVertex> &physics_vertices = motion_properties.GetVertices();

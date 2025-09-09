@@ -32,9 +32,11 @@
 
 #include "core/debugger/debugger_marshalls.h"
 #include "core/debugger/engine_debugger.h"
+#include "core/io/dir_access.h"
 #include "core/io/marshalls.h"
 #include "core/math/math_fieldwise.h"
 #include "core/object/script_language.h"
+#include "core/os/time.h"
 #include "core/templates/local_vector.h"
 #include "scene/gui/popup_menu.h"
 #include "scene/main/canvas_layer.h"
@@ -164,6 +166,26 @@ Error SceneDebugger::_msg_inspect_objects(const Array &p_args) {
 	_send_object_ids(ids, p_args[1]);
 	return OK;
 }
+
+#ifndef DISABLE_DEPRECATED
+Error SceneDebugger::_msg_inspect_object(const Array &p_args) {
+	ERR_FAIL_COND_V(p_args.is_empty(), ERR_INVALID_DATA);
+	// Legacy compatibility: convert single object ID to new format, then send single object response.
+	Vector<ObjectID> ids;
+	ids.append(ObjectID(p_args[0].operator uint64_t()));
+
+	SceneDebuggerObject obj(ids[0]);
+	if (obj.id.is_null()) {
+		EngineDebugger::get_singleton()->send_message("scene:inspect_object", Array());
+		return OK;
+	}
+
+	Array arr;
+	obj.serialize(arr);
+	EngineDebugger::get_singleton()->send_message("scene:inspect_object", arr);
+	return OK;
+}
+#endif // DISABLE_DEPRECATED
 
 Error SceneDebugger::_msg_clear_selection(const Array &p_args) {
 	RuntimeNodeSelect::get_singleton()->_clear_selection();
@@ -423,6 +445,46 @@ Error SceneDebugger::_msg_runtime_node_select_reset_camera_3d(const Array &p_arg
 
 // endregion
 
+// region Embedded process screenshot.
+
+Error SceneDebugger::_msg_rq_screenshot(const Array &p_args) {
+	ERR_FAIL_COND_V(p_args.is_empty(), ERR_INVALID_DATA);
+
+	Viewport *viewport = SceneTree::get_singleton()->get_root();
+	ERR_FAIL_NULL_V_MSG(viewport, ERR_UNCONFIGURED, "Cannot get a viewport from the main screen.");
+	Ref<ViewportTexture> texture = viewport->get_texture();
+	ERR_FAIL_COND_V_MSG(texture.is_null(), ERR_UNCONFIGURED, "Cannot get a viewport texture from the main screen.");
+	Ref<Image> img = texture->get_image();
+	ERR_FAIL_COND_V_MSG(img.is_null(), ERR_UNCONFIGURED, "Cannot get an image from a viewport texture of the main screen.");
+	img->clear_mipmaps();
+
+	const String TEMP_DIR = OS::get_singleton()->get_temp_path();
+	uint32_t suffix_i = 0;
+	String path;
+	while (true) {
+		String datetime = Time::get_singleton()->get_datetime_string_from_system().remove_chars("-T:");
+		datetime += itos(Time::get_singleton()->get_ticks_usec());
+		String suffix = datetime + (suffix_i > 0 ? itos(suffix_i) : "");
+		path = TEMP_DIR.path_join("scr-" + suffix + ".png");
+		if (!DirAccess::exists(path)) {
+			break;
+		}
+		suffix_i += 1;
+	}
+	img->save_png(path);
+
+	Array arr;
+	arr.append(p_args[0]);
+	arr.append(img->get_width());
+	arr.append(img->get_height());
+	arr.append(path);
+	EngineDebugger::get_singleton()->send_message("game_view:get_screenshot", arr);
+
+	return OK;
+}
+
+// endregion
+
 HashMap<String, SceneDebugger::ParseMessageFunc> SceneDebugger::message_handlers;
 
 Error SceneDebugger::parse_message(void *p_user, const String &p_msg, const Array &p_args, bool &r_captured) {
@@ -454,6 +516,9 @@ void SceneDebugger::_init_message_handlers() {
 	message_handlers["request_scene_tree"] = _msg_request_scene_tree;
 	message_handlers["save_node"] = _msg_save_node;
 	message_handlers["inspect_objects"] = _msg_inspect_objects;
+#ifndef DISABLE_DEPRECATED
+	message_handlers["inspect_object"] = _msg_inspect_object;
+#endif // DISABLE_DEPRECATED
 	message_handlers["clear_selection"] = _msg_clear_selection;
 	message_handlers["suspend_changed"] = _msg_suspend_changed;
 	message_handlers["next_frame"] = _msg_next_frame;
@@ -490,6 +555,7 @@ void SceneDebugger::_init_message_handlers() {
 #ifndef _3D_DISABLED
 	message_handlers["runtime_node_select_reset_camera_3d"] = _msg_runtime_node_select_reset_camera_3d;
 #endif
+	message_handlers["rq_screenshot"] = _msg_rq_screenshot;
 }
 
 void SceneDebugger::_save_node(ObjectID id, const String &p_path) {
@@ -1591,8 +1657,8 @@ void RuntimeNodeSelect::_root_window_input(const Ref<InputEvent> &p_event) {
 	if (camera_override) {
 		if (node_select_type == NODE_TYPE_2D) {
 			is_dragging_camera = panner->gui_input(p_event, Rect2(Vector2(), root->get_visible_rect().get_size()));
-		} else if (node_select_type == NODE_TYPE_3D && selection_drag_state == SELECTION_DRAG_NONE) {
 #ifndef _3D_DISABLED
+		} else if (node_select_type == NODE_TYPE_3D && selection_drag_state == SELECTION_DRAG_NONE) {
 			if (_handle_3d_input(p_event)) {
 				return;
 			}
@@ -1764,8 +1830,8 @@ void RuntimeNodeSelect::_physics_frame() {
 				}
 			}
 		}
-	} else if (node_select_type == NODE_TYPE_3D) {
 #ifndef _3D_DISABLED
+	} else if (node_select_type == NODE_TYPE_3D) {
 		if (selection_drag_valid) {
 			_find_3d_items_at_rect(selection_drag_area, items);
 		} else {
@@ -1879,18 +1945,6 @@ void RuntimeNodeSelect::_send_ids(const Vector<Node *> &p_picked_nodes, bool p_i
 		return;
 	}
 
-	int limit = max_selection - selected_ci_nodes.size();
-#ifndef _3D_DISABLED
-	limit -= selected_3d_nodes.size();
-#endif // _3D_DISABLED
-	if (limit <= 0) {
-		return;
-	}
-	if (picked_nodes.size() > limit) {
-		picked_nodes.resize(limit);
-		EngineDebugger::get_singleton()->send_message("show_selection_limit_warning", Array());
-	}
-
 	LocalVector<Node *> nodes;
 	LocalVector<ObjectID> ids;
 	for (Node *node : picked_nodes) {
@@ -1920,6 +1974,16 @@ void RuntimeNodeSelect::_send_ids(const Vector<Node *> &p_picked_nodes, bool p_i
 		}
 	}
 
+	uint32_t limit = max_selection - selected_ci_nodes.size();
+#ifndef _3D_DISABLED
+	limit -= selected_3d_nodes.size();
+#endif // _3D_DISABLED
+	if (ids.size() > limit) {
+		ids.resize(limit);
+		nodes.resize(limit);
+		EngineDebugger::get_singleton()->send_message("show_selection_limit_warning", Array());
+	}
+
 	for (ObjectID id : selected_ci_nodes) {
 		ids.push_back(id);
 		nodes.push_back(ObjectDB::get_instance<Node>(id));
@@ -1930,11 +1994,6 @@ void RuntimeNodeSelect::_send_ids(const Vector<Node *> &p_picked_nodes, bool p_i
 		nodes.push_back(ObjectDB::get_instance<Node>(KV.key));
 	}
 #endif // _3D_DISABLED
-
-	if (ids.size() > (unsigned)max_selection) {
-		ids.resize(max_selection);
-		EngineDebugger::get_singleton()->send_message("show_selection_limit_warning", Array());
-	}
 
 	if (ids.is_empty()) {
 		EngineDebugger::get_singleton()->send_message("remote_nothing_selected", message);
@@ -2132,7 +2191,7 @@ void RuntimeNodeSelect::_update_selection() {
 		if (visual_instance) {
 			bounds = visual_instance->get_aabb();
 		} else {
-#ifndef PHYSICS_2D_DISABLED
+#ifndef PHYSICS_3D_DISABLED
 			CollisionShape3D *collision_shape = Object::cast_to<CollisionShape3D>(node_3d);
 			if (collision_shape) {
 				Ref<Shape3D> shape = collision_shape->get_shape();
@@ -2140,7 +2199,7 @@ void RuntimeNodeSelect::_update_selection() {
 					bounds = shape->get_debug_mesh()->get_aabb();
 				}
 			}
-#endif // PHYSICS_2D_DISABLED
+#endif // PHYSICS_3D_DISABLED
 		}
 
 		Transform3D xform_to_top_level_parent_space = node_3d->get_global_transform().affine_inverse() * node_3d->get_global_transform();

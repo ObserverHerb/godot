@@ -157,10 +157,6 @@ Error ResourceLoaderText::_parse_ext_resource(VariantParser::Stream *p_stream, R
 					}
 				}
 			} else {
-#ifdef TOOLS_ENABLED
-				//remember ID for saving
-				res->set_id_for_path(local_path, id);
-#endif
 				r_res = res;
 			}
 		} else {
@@ -485,6 +481,13 @@ Error ResourceLoaderText::load() {
 
 		resource_current++;
 	}
+
+#ifdef TOOLS_ENABLED
+	for (const KeyValue<String, ExtResource> &E : ext_resources) {
+		// Remember ID for saving.
+		Resource::set_resource_id_for_path(local_path, E.value.path, E.key);
+	}
+#endif
 
 	//these are the ones that count
 	resources_total -= resource_current;
@@ -1931,7 +1934,8 @@ Error ResourceFormatSaverTextInstance::save(const String &p_path, const Ref<Reso
 					}
 				}
 
-				Variant default_value = PropertyUtils::get_property_default_value(res.ptr(), name);
+				bool is_script = name == CoreStringName(script);
+				Variant default_value = is_script ? Variant() : PropertyUtils::get_property_default_value(res.ptr(), name);
 
 				if (default_value.get_type() != Variant::NIL && bool(Variant::evaluate(Variant::OP_EQUAL, value, default_value))) {
 					continue;

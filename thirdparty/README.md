@@ -8,7 +8,7 @@ readability.
 ## accesskit
 
 - Upstream: https://github.com/AccessKit/accesskit-c
-- Version: 0.16.0 (06c1779473ff4304f42ea254f77fef2e33f982b0, 2025)
+- Version: 0.17.0 (f69571eca23151be07a41bf493ca48a2b44b6a8b, 2025)
 - License: MIT
 
 Files extracted from upstream source:
@@ -120,7 +120,7 @@ Files extracted from upstream source:
 ## clipper2
 
 - Upstream: https://github.com/AngusJohnson/Clipper2
-- Version: 1.5.3 (fa165fe8364b7d0e5d5db2182369b8c82348f4ea, 2025)
+- Version: 1.5.4 (ef88ee97c0e759792e43a2b2d8072def6c9244e8, 2025)
 - License: BSL 1.0
 
 Files extracted from upstream source:
@@ -436,7 +436,7 @@ Patches:
 ## harfbuzz
 
 - Upstream: https://github.com/harfbuzz/harfbuzz
-- Version: 10.4.0 (3ef8709829a5884517ad91a97b32b9435b2f20d1, 2025)
+- Version: 11.3.2 (4e3df1c1383481ed5717603d5dd3453a04fb16ba, 2025)
 - License: MIT
 
 Files extracted from upstream source:
@@ -444,7 +444,21 @@ Files extracted from upstream source:
 - `AUTHORS`, `COPYING`, `THANKS`
 - From the `src` folder, recursively:
   - All the `.cc`, `.h`, `.hh` files
-  - Except `main.cc`, `harfbuzz*.cc`, `failing-alloc.c`, `test*.cc`, `hb-wasm*.*`, `wasm/*`
+  - Except `main.cc`, `harfbuzz*.cc`, `failing-alloc.c`, `test*.cc`, `hb-wasm*.*`, `hb-harfrust.cc`, `wasm/*`, `ms-use/*`, `rust/*`
+
+
+## hidapi
+
+- Upstream: https://github.com/libsdl-org/SDL/tree/main/src/hidapi
+- Version: 0.14.0 (8d604353a53853fa56d1bdce0363535605ca868f, 2025)
+- License: BSD-3-Clause
+
+Files extracted from upstream source:
+
+- See `thirdparty/sdl/update-sdl.sh`
+
+The source code of this library is being bundled with SDL's source code files.
+The files of hidapi are stored in `thirdparty/sdl/hidapi/` folder.
 
 
 ## icu4c
@@ -628,7 +642,7 @@ See `linuxbsd_headers/README.md`.
 ## manifold
 
 - Upstream: https://github.com/elalish/manifold
-- Version: 3.1.1 (2f4741e0b1de44d6d461b869e481351335340b44, 2025)
+- Version: git (76208dc02b069d2be50ed2d8a9279ee5622fa5fd, 2025)
 - License: Apache 2.0
 
 File extracted from upstream source:
@@ -640,14 +654,13 @@ File extracted from upstream source:
 ## mbedtls
 
 - Upstream: https://github.com/Mbed-TLS/mbedtls
-- Version: 3.6.3 (22098d41c6620ce07cf8a0134d37302355e1e5ef, 2025)
+- Version: 3.6.4 (c765c831e5c2a0971410692f92f7a81d6ec65ec2, 2025)
 - License: Apache 2.0
 
 File extracted from upstream release tarball:
 
 - All `.h` from `include/mbedtls/` to `thirdparty/mbedtls/include/mbedtls/`
   and all `.h` from `include/psa/` to `thirdparty/mbedtls/include/psa/`
-- All `.c` and `.h` from `library/` to `thirdparty/mbedtls/library/`
 - From `library/` to `thirdparty/mbedtls/library/`:
   - All `.c` and `.h` files
   - Except `bignum_mod.c`, `block_cipher.c`, `ecp_curves_new.c`, `lmots.c`,
@@ -666,7 +679,7 @@ Patches:
 ## meshoptimizer
 
 - Upstream: https://github.com/zeux/meshoptimizer
-- Version: 0.23 (3e9d1ff3135794f519f3237515277c8d9a3fd3f2, 2025)
+- Version: 0.24 (7b2d4f4c817aea55d74dcd65d9763ac2ca608026, 2025)
 - License: MIT
 
 Files extracted from upstream repository:
@@ -717,7 +730,7 @@ Patches:
 ## miniupnpc
 
 - Upstream: https://github.com/miniupnp/miniupnp
-- Version: 2.2.8 (b55145ec095652289a59c33603f3abafee898273, 2024)
+- Version: 2.3.3 (bf4215a7574f88aa55859db9db00e3ae58cf42d6, 2025)
 - License: BSD-3-Clause
 
 Files extracted from upstream source:
@@ -851,7 +864,7 @@ Files extracted from the upstream source:
 ## openxr
 
 - Upstream: https://github.com/KhronosGroup/OpenXR-SDK
-- Version: 1.1.47 (858912260ca616f4c23f7fb61c89228c353eb124, 2025)
+- Version: 1.1.49 (977f6675bc0057d5a54ed290cb5c71c699b1c0ab, 2025)
 - License: Apache 2.0
 
 Files extracted from upstream source:
@@ -874,10 +887,6 @@ Exclude:
 - All following files (and their `.license` files):
   `*.{def,expsym,in,json,map,pom,rc,txt}`
 - All dotfiles
-
-Patches:
-
-- `0001-glad-egl.patch` (GH-98824)
 
 
 ## pcre2
@@ -946,10 +955,33 @@ Files extracted from upstream source:
 - Textures generated using the Python scripts in the `Scripts` folder
 
 
+## sdl
+
+- Upstream: https://github.com/libsdl-org/SDL
+- Version: 3.2.14 (8d604353a53853fa56d1bdce0363535605ca868f, 2025)
+- License: Zlib
+
+Files extracted from upstream source:
+
+- See `thirdparty/sdl/update-sdl.sh`
+
+Patches:
+
+- `0001-remove-unnecessary-subsystems.patch` (GH-106218)
+- `0002-msvc-constants-fpstrict.patch` (GH-106218)
+- `0003-std-include.patch` (GH-108144)
+- `0004-errno-include.patch` (GH-108354)
+- `0005-fix-libudev-dbus.patch` (GH-108373)
+- `0006-fix-cs-environ.patch` (GH-109283)
+
+The SDL source code folder includes `hidapi` library inside of folder `thirdparty/sdl/hidapi/`.
+Its version and license is described in this file under `hidapi`.
+
+
 ## spirv-cross
 
 - Upstream: https://github.com/KhronosGroup/SPIRV-Cross
-- Version: git (6173e24b31f09a0c3217103a130e74c4ddec14a6, 2024)
+- Version: git (d7440cbc6c50332600fdf21c45e6a5df0b07e54c, 2025)
 - License: Apache 2.0
 
 Files extracted from upstream source:
@@ -1010,6 +1042,7 @@ Files extracted from upstream source:
 Patches:
 
 - `0001-revert-tvglines-bezier-precision.patch` (GH-96658)
+- `0002-use-heap-alloc.patch` (GH-109530)
 
 
 ## tinyexr
@@ -1030,7 +1063,7 @@ Patches:
 ## ufbx
 
 - Upstream: https://github.com/ufbx/ufbx
-- Version: 0.18.2 (5b5494b9b6c2cdb0fc0ae873bdbf8718cdeb85af, 2025)
+- Version: 0.20.0 (a63ff0a47485328880b3300e7bcdf01413343a45, 2025)
 - License: MIT
 
 Files extracted from upstream source:

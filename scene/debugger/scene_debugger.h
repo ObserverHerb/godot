@@ -83,6 +83,9 @@ private:
 	static Error _msg_request_scene_tree(const Array &p_args);
 	static Error _msg_save_node(const Array &p_args);
 	static Error _msg_inspect_objects(const Array &p_args);
+#ifndef DISABLE_DEPRECATED
+	static Error _msg_inspect_object(const Array &p_args);
+#endif // DISABLE_DEPRECATED
 	static Error _msg_clear_selection(const Array &p_args);
 	static Error _msg_suspend_changed(const Array &p_args);
 	static Error _msg_next_frame(const Array &p_args);
@@ -119,6 +122,7 @@ private:
 #ifndef _3D_DISABLED
 	static Error _msg_runtime_node_select_reset_camera_3d(const Array &p_args);
 #endif
+	static Error _msg_rq_screenshot(const Array &p_args);
 
 public:
 	static Error parse_message(void *p_user, const String &p_msg, const Array &p_args, bool &r_captured);
