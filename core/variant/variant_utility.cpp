@@ -1154,8 +1154,6 @@ int64_t VariantUtilityFunctions::layer_number_as_bitmask(int64_t layer_number) {
 	return pow(2, layer_number - 1);
 }
 
-#ifdef DEBUG_METHODS_ENABLED
-
 String VariantUtilityFunctions::join_string(const Variant **p_args, int p_arg_count) {
 	String s;
 	for (int i = 0; i < p_arg_count; i++) {
